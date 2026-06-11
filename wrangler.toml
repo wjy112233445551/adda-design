@@ -1,5 +1,0 @@
-name = "adda-artitecture"
-compatibility_date = "2025-06-11"
-
-[services]
-WORKER_SELF_REFERENCE = { service = "adda-artitecture" }
