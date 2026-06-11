@@ -1,15 +1,19 @@
 {
   "about": {
-    "zh": "邸岸空间建筑设计事务所成立于南京，专注于高端住宅、商业空间及文化项目的室内设计与建筑改造。我们相信空间是生活的容器，每一个项目都是与业主共同书写的叙事。",
-    "en": "ADDA architecture is a Nanjing-based design studio specializing in high-end residential, commercial, and cultural projects. We believe space is the container of life — every project is a narrative co-authored with our clients.",
+    "zh": "邸岸空间建筑设计事务所由设计师Akon和Darren创立，致力于打造富有情感和深度的建筑体验，为人们的生活增添色彩。A：AKON D：DARREN D：邸|高级居所|人与空间共同呼吸 A：岸|家的港湾|五感的自由与松弛",
+    "en": "Dichang Space Architecture Design Firm was founded by designers Akon and Darren, dedicated to creating buildings that are emotionally rich and profound, adding color to people's lives. A: AKON D: DARREN D: Residence | High-end Mansion | Coexistence of People and Space A: Shore | The Harbor of Home | Freedom and Relaxation of the Five Senses",
     "location": "南京 · 中国",
     "founded": "2017",
     "projects": "100+",
-    "clients": "保利 · 滨江 · 招商· 金基· 仁恒· 万科"
+    "clients": "保利 · 滨江 · 招商· 金基· 仁恒"
   },
   "contact": {
     "email": "630235075@qq.com",
     "wechat": "ADDAdesign"
   },
-  "founders": []
+  "founders": [],
+  "join": {
+    "positions": [],
+    "email": "630235075@qq.com"
+  }
 }
