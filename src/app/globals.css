@@ -56,3 +56,36 @@ a {
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { scrollbar-width: none; }
 
+/* ── Hero 响应式 ── */
+.hero-overlay-top { display: none; }
+
+@media (max-width: 768px) {
+  .hero-section {
+    height: 100svh !important;
+    min-height: -webkit-fill-available;
+  }
+  .hero-bg-desktop { display: none !important; }
+  .hero-bg-mobile { display: block !important; }
+  .hero-copy {
+    left: 20px !important;
+    right: 20px !important;
+    bottom: clamp(24px, 5vw, 50px) !important;
+    max-width: none !important;
+  }
+  .hero-title {
+    font-size: clamp(14px, 4.5vw, 22px) !important;
+    margin-bottom: 10px !important;
+    white-space: nowrap;
+  }
+  .hero-text {
+    font-size: clamp(11px, 3vw, 13px) !important;
+    line-height: 1.85 !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .hero-copy {
+    max-width: clamp(320px, 45vw, 480px) !important;
+  }
+}
+

@@ -30,7 +30,7 @@ export default function AdminPage() {
 }
 
 // ====== Dashboard ======
-type View = "projects" | "renderings" | "about" | "contact" | "founders" | "deploy" | "editor";
+type View = "projects" | "renderings" | "about" | "contact" | "join" | "founders" | "deploy" | "editor";
 function Dashboard() {
   const [view, setView] = useState<View>("projects");
   const [prevView, setPrevView] = useState<View>("projects");
@@ -67,6 +67,7 @@ function Dashboard() {
           ["renderings","效果图","Renderings"],
           ["about","关于页面","About"],
           ["contact","联系页面","Contact"],
+          ["join","加入我们","Join Us"],
           ["founders","创始人","Founders"],
           ["deploy","部署上线","Deploy"],
         ].map(([id, zh, en]) => (
@@ -92,6 +93,7 @@ function Dashboard() {
         {view === "renderings" && <RenderingsPanel onEdit={(p) => { setEditProject(p); setPrevView("renderings"); setView("editor"); }} />}
         {view === "about" && <PageForm page="about" />}
         {view === "contact" && <PageForm page="contact" />}
+        {view === "join" && <JoinForm />}
         {view === "founders" && <FoundersForm />}
         {view === "deploy" && <DeployBtn />}
       </main>
@@ -746,6 +748,84 @@ function FoundersForm() {
       <div style={{ display:"flex", alignItems:"center", gap:16 }}>
         <button onClick={save} style={{ fontFamily:"var(--font-body)", background:"rgba(255,255,255,0.1)", border:"none", color:"#fff", padding:"8px 24px", fontSize:11, cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.1em" }}>保存</button>
         {msg && <span style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.4)", fontSize:10 }}>{msg}</span>}
+      </div>
+    </div>
+  );
+}
+
+// ====== Join Form ======
+function JoinForm() {
+  const [positions, setPositions] = useState<any[]>([]);
+  const [email, setEmail] = useState("");
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    fetch("/api/pages").then(r=>r.json()).then(d => {
+      if (d.join) {
+        if (d.join.positions) setPositions(d.join.positions);
+        if (d.join.email) setEmail(d.join.email);
+      }
+    }).catch(()=>{});
+  }, []);
+
+  const save = async () => {
+    const cur = await fetch("/api/pages").then(r=>r.json()).catch(()=>({}));
+    await fetch("/api/pages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...cur, join: { positions, email } })
+    });
+    setMsg("✅ 已保存"); setTimeout(() => setMsg(""), 3000);
+  };
+
+  const addPosition = () => {
+    setPositions([...positions, { title: "", titleEn: "", desc: "", descEn: "" }]);
+  };
+  const removePosition = (i: number) => {
+    setPositions(positions.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <div style={{ maxWidth: 600 }}>
+      <h2 style={{ fontFamily: "var(--font-display)", color: "#fff", fontSize: 20, margin: "0 0 24px" }}>加入我们页面</h2>
+
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ fontFamily: "var(--font-body)", color: "rgba(255,255,255,0.3)", fontSize: 10, display: "block", marginBottom: 6, textTransform: "uppercase" }}>投递邮箱</label>
+        <input value={email} onChange={e => setEmail(e.target.value)}
+          style={{ width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", padding: "8px 12px", color: "rgba(255,255,255,0.8)", fontSize: 13, outline: "none", fontFamily: "var(--font-body)", boxSizing: "border-box" }} />
+      </div>
+
+      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <h3 style={{ fontFamily: "var(--font-display)", color: "rgba(255,255,255,0.5)", fontSize: 14, margin: 0 }}>招聘职位 ({positions.length})</h3>
+        <button onClick={addPosition}
+          style={{ fontFamily: "var(--font-body)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "4px 12px", fontSize: 10, cursor: "pointer", textTransform: "uppercase" }}>+ 添加</button>
+      </div>
+
+      {positions.map((pos, i) => (
+        <div key={i} style={{ marginBottom: 24, padding: 20, border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <span style={{ fontFamily: "var(--font-display)", color: "rgba(255,255,255,0.4)", fontSize: 12 }}>职位 {i + 1}</span>
+            <button onClick={() => removePosition(i)}
+              style={{ fontFamily: "var(--font-body)", background: "none", border: "none", color: "rgba(255,0,0,0.5)", fontSize: 10, cursor: "pointer" }}>删除</button>
+          </div>
+          {["title","titleEn","desc","descEn"].map(k => (
+            <div key={k} style={{ marginBottom: 10 }}>
+              <label style={{ fontFamily: "var(--font-body)", color: "rgba(255,255,255,0.3)", fontSize: 10, display: "block", marginBottom: 4, textTransform: "uppercase" }}>{k}</label>
+              {k.startsWith("desc") ? (
+                <textarea value={pos[k] || ""} onChange={e => { const n = [...positions]; n[i] = { ...n[i], [k]: e.target.value }; setPositions(n); }} rows={3}
+                  style={{ width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", padding: "8px 12px", color: "rgba(255,255,255,0.8)", fontSize: 13, outline: "none", fontFamily: "var(--font-body)", resize: "vertical", boxSizing: "border-box" }} />
+              ) : (
+                <input value={pos[k] || ""} onChange={e => { const n = [...positions]; n[i] = { ...n[i], [k]: e.target.value }; setPositions(n); }}
+                  style={{ width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", padding: "8px 12px", color: "rgba(255,255,255,0.8)", fontSize: 13, outline: "none", fontFamily: "var(--font-body)", boxSizing: "border-box" }} />
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 16 }}>
+        <button onClick={save} style={{ fontFamily: "var(--font-body)", background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", padding: "8px 24px", fontSize: 11, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.1em" }}>保存</button>
+        {msg && <span style={{ fontFamily: "var(--font-body)", color: "rgba(255,255,255,0.4)", fontSize: 10 }}>{msg}</span>}
       </div>
     </div>
   );

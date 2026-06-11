@@ -1,11 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 
 const LanyardCard = dynamic(() => import("@/components/LanyardCard"), { ssr: false });
 
-const positions = [
+interface Position {
+  title: string; titleEn: string; desc: string; descEn: string;
+}
+
+const fallback: Position[] = [
   { title: "主案设计师", titleEn: "Senior Interior Designer",
     desc: "负责项目全案设计，从概念到落地。5年以上室内设计经验，能独立带领项目团队。",
     descEn: "Lead full-scope design from concept to completion. 5+ years interior design experience, capable of independently leading project teams." },
@@ -21,6 +26,19 @@ const positions = [
 ];
 
 export default function JoinPage() {
+  const [positions, setPositions] = useState<Position[]>(fallback);
+  const [email, setEmail] = useState("hr@adda.studio");
+
+  useEffect(() => {
+    fetch("/api/pages")
+      .then(r => r.json())
+      .then(d => {
+        if (d.join?.positions?.length) setPositions(d.join.positions);
+        if (d.join?.email) setEmail(d.join.email);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="max-w-[1400px] mx-auto px-6 pb-16"
       style={{ paddingTop: "clamp(48px, 8vw, 128px)" }}>
@@ -72,10 +90,10 @@ export default function JoinPage() {
           style={{ fontFamily: "var(--font-body)", fontSize: "clamp(11px, 1vw, 12px)" }}>
           请将简历与作品集发送至 / Please send your CV and portfolio to:
         </p>
-        <a href="mailto:hr@adda.studio"
+        <a href={`mailto:${email}`}
           className="text-white/70 hover:text-white transition-colors"
           style={{ fontFamily: "var(--font-body)", fontSize: "clamp(13px, 1.1vw, 14px)" }}>
-          hr@adda.studio
+          {email}
         </a>
       </div>
 

@@ -10,6 +10,8 @@ import gsap from "gsap";
 
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
+  const heroIntroRef = useRef<HTMLDivElement>(null);
+  const heroCharsRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
   const category = searchParams.get("category") || "";
@@ -45,6 +47,38 @@ export default function Home() {
 
   const carouselProjects = filtered.slice(0, 5);
   const gridProjects = filtered; // All projects in grid
+
+  // Hero 文字逐字弹出 — 点击 Enter 后触发，动画期间锁定滚动
+  useEffect(() => {
+    const onExit = () => {
+      // 锁定滚动
+      document.body.style.overflow = "hidden";
+
+      if (!heroCharsRef.current) return;
+      const chars = heroCharsRef.current.querySelectorAll<HTMLSpanElement>(".hero-char");
+
+      gsap.fromTo(
+        chars,
+        { opacity: 0, y: 24 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          stagger: 0.04,
+          delay: 0.6,
+          ease: "power3.out",
+          onComplete: () => {
+            // 解锁滚动，通知导航栏渐显
+            document.body.style.overflow = "";
+            window.dispatchEvent(new CustomEvent("hero-animation-done"));
+          },
+        }
+      );
+    };
+
+    window.addEventListener("preloader-exit", onExit);
+    return () => window.removeEventListener("preloader-exit", onExit);
+  }, []);
 
   useEffect(() => {
     if (carouselProjects.length === 0 || !heroRef.current) return;
@@ -130,7 +164,105 @@ export default function Home() {
   }, [visibleCount, gridProjects.length, loading]);
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 pt-24 pb-16">
+    <>
+      {/* ═══ Hero 大图 + 左下角简介（响应式） ═══ */}
+      <section className="hero-section" style={{ height: "100dvh", minHeight: "100svh", position: "relative", overflow: "hidden" }}>
+        {/* 主图背景 — 桌面 */}
+        <div className="hero-bg hero-bg-desktop"
+          style={{
+            position: "absolute", inset: 0,
+            backgroundImage: "url(/hero.jpg)",
+            backgroundSize: "cover", backgroundPosition: "center",
+          }}
+        />
+        {/* 主图背景 — 手机 */}
+        <div className="hero-bg-mobile"
+          style={{
+            position: "absolute", inset: 0,
+            backgroundImage: "url(/hero-mobile.jpg)",
+            backgroundSize: "cover", backgroundPosition: "center",
+            display: "none",
+          }}
+        />
+        {/* 暗色渐变覆盖 */}
+        <div className="hero-overlay"
+          style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 50%, transparent 100%)",
+          }}
+        />
+        {/* 顶部渐变 — 桌面端隐藏，移动端显示（保证文字可读性） */}
+        <div className="hero-overlay-top"
+          style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 30%)",
+          }}
+        />
+
+        {/* 文案区 */}
+        <div className="hero-copy"
+          ref={heroIntroRef}
+          style={{
+            position: "absolute",
+            left: "clamp(20px, 5vw, 80px)",
+            right: "clamp(20px, 5vw, 80px)",
+            bottom: "clamp(32px, 7vw, 100px)",
+            maxWidth: "clamp(280px, 38vw, 540px)",
+          }}
+        >
+          <h1 className="hero-title"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "clamp(16px, 2vw, 30px)",
+              fontWeight: 400,
+              lineHeight: 1.4,
+              color: "#fff",
+              marginBottom: "clamp(12px, 2vw, 20px)",
+            }}
+          >
+            ADDA Architecture
+          </h1>
+          <div
+            ref={heroCharsRef}
+            className="hero-text"
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: "clamp(11px, 0.95vw, 14px)",
+              lineHeight: 2.2,
+              letterSpacing: "0.04em",
+              color: "rgba(255,255,255,0.5)",
+            }}
+          >
+            {"人的一生大多数时间是在建筑室内空间度过的".split("").map((c, i) => (
+              <span key={i} className="hero-char" style={{ display: "inline-block", opacity: 0 }}>
+                {c === " " ? " " : c}
+              </span>
+            ))}
+            <br />
+            {"其中居住空间与我们的身心健康息息相关".split("").map((c, i) => (
+              <span key={`l2-${i}`} className="hero-char" style={{ display: "inline-block", opacity: 0 }}>
+                {c === " " ? " " : c}
+              </span>
+            ))}
+            <br />
+            {"邸岸倡导呼吸性、松弛感、自由度".split("").map((c, i) => (
+              <span key={`l3-${i}`} className="hero-char" style={{ display: "inline-block", opacity: 0 }}>
+                {c === " " ? " " : c}
+              </span>
+            ))}
+            <br />
+            {"人与空间共同成长的生活方式".split("").map((c, i) => (
+              <span key={`l4-${i}`} className="hero-char" style={{ display: "inline-block", opacity: 0 }}>
+                {c === " " ? " " : c}
+              </span>
+            ))}
+          </div>
+        </div>
+
+      </section>
+
+      {/* ═══ 项目内容 ═══ */}
+      <div className="max-w-[1400px] mx-auto px-6 pt-24 pb-16">
       {/* Hero Carousel — 5 featured projects, horizontal scroll */}
       {carouselProjects.length > 0 && (
       <section ref={heroRef} className="opacity-0" style={{ marginBottom: "clamp(40px, 6vw, 96px)" }}>
@@ -271,6 +403,7 @@ export default function Home() {
           }}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 }
