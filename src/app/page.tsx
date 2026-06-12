@@ -180,7 +180,8 @@ export default function Home() {
           style={{
             position: "absolute", inset: 0,
             backgroundImage: "url(/hero-mobile.jpg)",
-            backgroundSize: "cover", backgroundPosition: "center",
+            backgroundSize: "100% auto", backgroundPosition: "center center",
+            backgroundRepeat: "no-repeat",
             display: "none",
           }}
         />

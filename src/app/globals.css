@@ -61,7 +61,7 @@ a {
 
 @media (max-width: 768px) {
   .hero-section {
-    height: 100svh !important;
+    height: 55svh !important;
     min-height: -webkit-fill-available;
   }
   .hero-bg-desktop { display: none !important; }
@@ -80,6 +80,10 @@ a {
   .hero-text {
     font-size: clamp(11px, 3vw, 13px) !important;
     line-height: 1.85 !important;
+  }
+  /* 顶部渐变收窄，覆盖更少 */
+  .hero-overlay-top {
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 20%) !important;
   }
 }
 

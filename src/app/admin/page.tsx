@@ -1,7 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
+
+// ====== 防止原生 select 下拉导致弹窗误关闭 ======
+function useModalBackdrop() {
+  const interactingRef = useRef(false);
+  const onSelectMouseDown = useCallback(() => { interactingRef.current = true; }, []);
+  const onBackdropClick = useCallback((callback: () => void) => {
+    if (interactingRef.current) { interactingRef.current = false; return; }
+    callback();
+  }, []);
+  return { onSelectMouseDown, onBackdropClick };
+}
 
 // ====== Types ======
 interface Project {
@@ -109,6 +120,7 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
   const [folders, setFolders] = useState<string[]>([]);
   const [folderImgs, setFolderImgs] = useState<string[]>([]);
 
+  const { onSelectMouseDown, onBackdropClick } = useModalBackdrop();
   const load = async () => {
     const [p, f] = await Promise.all([fetch("/api/projects", { cache: "no-store" }), fetch("/api/browse", { cache: "no-store" })]);
     setProjects(await p.json()); setFolders(await f.json());
@@ -157,7 +169,7 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
       {/* Edit Form Modal */}
       {showForm && (
         <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"flex-start", justifyContent:"center", paddingTop:40, overflow:"auto" }}
-          onClick={() => setShowForm(false)}>
+          onClick={() => onBackdropClick(() => setShowForm(false))}>
           <div style={{ background:"#111", border:"1px solid rgba(255,255,255,0.1)", padding:32, width:"100%", maxWidth:640, maxHeight:"85vh", overflow:"auto" }}
             onClick={e => e.stopPropagation()}>
             <h3 style={{ fontFamily:"var(--font-display)", color:"#fff", fontSize:18, margin:"0 0 24px" }}>{projects.find(p=>p.slug===form.slug) ? "编辑项目" : "新建项目"}</h3>
@@ -173,7 +185,7 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
               <div style={{ gridColumn:"1/-1" }}>
                 <label style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.3)", fontSize:10, display:"block", marginBottom:4, textTransform:"uppercase" }}>图片文件夹</label>
                 <div style={{ display:"flex", gap:8 }}>
-                  <select value={form.folder||""} onChange={async e => { setForm({...form,folder:e.target.value,cover:""}); const r=await fetch(`/api/browse?folder=${encodeURIComponent(e.target.value)}`); setFolderImgs(await r.json()); }}
+                  <select value={form.folder||""} onMouseDown={onSelectMouseDown} onChange={async e => { setForm({...form,folder:e.target.value,cover:""}); const r=await fetch(`/api/browse?folder=${encodeURIComponent(e.target.value)}`); setFolderImgs(await r.json()); }}
                     style={{ flex:1, background:"transparent", border:"1px solid rgba(255,255,255,0.1)", padding:"8px 12px", color:"rgba(255,255,255,0.8)", fontSize:13, outline:"none", fontFamily:"var(--font-body)" }}>
                     <option value="">已导入的项目...</option>
                     {folders.map(f => <option key={f} value={f}>{f}</option>)}
@@ -198,14 +210,14 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
               )}
               <div>
                 <label style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.3)", fontSize:10, display:"block", marginBottom:4 }}>Category</label>
-                <select value={form.category||"住宅"} onChange={e => setForm({...form,category:e.target.value})}
+                <select value={form.category||"住宅"} onMouseDown={onSelectMouseDown} onChange={e => setForm({...form,category:e.target.value})}
                   style={{ width:"100%", background:"transparent", border:"1px solid rgba(255,255,255,0.1)", padding:"8px 12px", color:"rgba(255,255,255,0.8)", fontSize:13, outline:"none", fontFamily:"var(--font-body)" }}>
                   <option>住宅</option><option>商业</option><option>办公空间</option>
                 </select>
               </div>
               <div>
                 <label style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.3)", fontSize:10, display:"block", marginBottom:4 }}>Type</label>
-                <select value={form.type||"residential"} onChange={e => setForm({...form,type:e.target.value})}
+                <select value={form.type||"residential"} onMouseDown={onSelectMouseDown} onChange={e => setForm({...form,type:e.target.value})}
                   style={{ width:"100%", background:"transparent", border:"1px solid rgba(255,255,255,0.1)", padding:"8px 12px", color:"rgba(255,255,255,0.8)", fontSize:13, outline:"none", fontFamily:"var(--font-body)" }}>
                   <option value="residential">住宅</option><option value="commercial">商业</option>
                 </select>
@@ -500,6 +512,7 @@ function RenderingsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
   const [folderImgs, setFolderImgs] = useState<string[]>([]);
   const [msg, setMsg] = useState("");
 
+  const { onSelectMouseDown: rmOnSelect, onBackdropClick: rmBackdrop } = useModalBackdrop();
   const load = async () => {
     const [p, f] = await Promise.all([fetch("/api/renderings", { cache: "no-store" }), fetch("/api/browse", { cache: "no-store" })]);
     setProjects(await p.json());
@@ -582,7 +595,7 @@ function RenderingsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
       {/* Edit Modal */}
       {editing && (
         <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"flex-start", justifyContent:"center", paddingTop:40, overflow:"auto" }}
-          onClick={() => { setEditing(null); setMsg(""); }}>
+          onClick={() => rmBackdrop(() => { setEditing(null); setMsg(""); })}>
           <div style={{ background:"#111", border:"1px solid rgba(255,255,255,0.1)", padding:32, width:"100%", maxWidth:720, maxHeight:"85vh", overflow:"auto" }}
             onClick={e => e.stopPropagation()}>
             <h3 style={{ fontFamily:"var(--font-display)", color:"#fff", fontSize:18, margin:"0 0 4px" }}>{form.titleEn}</h3>
@@ -594,7 +607,7 @@ function RenderingsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
                 <label style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.3)", fontSize:10, display:"block", marginBottom:4, textTransform:"uppercase" }}>图片文件夹</label>
                 <div style={{ display:"flex", gap:8, alignItems:"center" }}>
                   <span style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.15)", fontSize:11, background:"rgba(255,255,255,0.04)", padding:"4px 8px", borderRadius:3 }}>{form.folder || "未设置"}</span>
-                  <select value="" onChange={e => { if(e.target.value) changeFolder(e.target.value); }}
+                  <select value="" onMouseDown={rmOnSelect} onChange={e => { if(e.target.value) changeFolder(e.target.value); }}
                     style={{ flex:1, background:"transparent", border:"1px solid rgba(255,255,255,0.1)", padding:"8px 12px", color:"rgba(255,255,255,0.8)", fontSize:13, outline:"none", fontFamily:"var(--font-body)" }}>
                     <option value="">切换文件夹...</option>
                     {folders.filter(f => f !== form.folder).map(f => <option key={f} value={f}>{f}</option>)}
@@ -833,6 +846,7 @@ function JoinForm() {
 
 // ====== File Browser ======
 function FileBrowser({ children, onImport }: { children: React.ReactNode; onImport: (folder: string) => void }) {
+  const { onSelectMouseDown: fbSelect, onBackdropClick: fbBackdrop } = useModalBackdrop();
   const [open, setOpen] = useState(false);
   const [path, setPath] = useState("/Users");
   const [dirs, setDirs] = useState<string[]>([]);
@@ -863,7 +877,7 @@ function FileBrowser({ children, onImport }: { children: React.ReactNode; onImpo
     <>
       <span onClick={() => { setOpen(true); browse(path); }}>{children}</span>
       {open && (
-        <div style={{ position:"fixed", inset:0, zIndex:500, background:"rgba(0,0,0,0.9)", display:"flex", alignItems:"center", justifyContent:"center" }} onClick={() => setOpen(false)}>
+        <div style={{ position:"fixed", inset:0, zIndex:500, background:"rgba(0,0,0,0.9)", display:"flex", alignItems:"center", justifyContent:"center" }} onClick={() => fbBackdrop(() => setOpen(false))}>
           <div style={{ background:"#111", border:"1px solid rgba(255,255,255,0.1)", width:700, maxHeight:"80vh", display:"flex", flexDirection:"column" }} onClick={e => e.stopPropagation()}>
             <div style={{ display:"flex", justifyContent:"space-between", padding:"12px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
               <h3 style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.6)", fontSize:12, margin:0 }}>选择图片文件夹</h3>

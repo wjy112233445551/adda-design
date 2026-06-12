@@ -28,7 +28,7 @@ const categories = [
   { label: "全部", labelEn: "All", value: "" },
   { label: "住宅", labelEn: "Residential", value: "residential" },
   { label: "商业", labelEn: "Commercial", value: "commercial" },
-  { label: "效果图", labelEn: "Renderings", value: "rendering" },
+  { label: "在建项目", labelEn: "Under Construction", value: "rendering" },
 ];
 
 export function Navigation() {
