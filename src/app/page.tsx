@@ -167,21 +167,27 @@ export default function Home() {
     <>
       {/* ═══ Hero 大图 + 左下角简介（响应式） ═══ */}
       <section className="hero-section" style={{ height: "100dvh", minHeight: "100svh", position: "relative", overflow: "hidden" }}>
-        {/* 主图背景 — 桌面 */}
-        <div className="hero-bg hero-bg-desktop"
+        {/* 主图背景 — 桌面（用 img 标签确保高优先级加载，避免背景图超时黑屏） */}
+        <img
+          src="/hero.jpg"
+          alt="ADDA Architecture"
+          fetchPriority="high"
+          className="hero-bg hero-bg-desktop"
           style={{
             position: "absolute", inset: 0,
-            backgroundImage: "url(/hero.jpg)",
-            backgroundSize: "cover", backgroundPosition: "center",
+            width: "100%", height: "100%",
+            objectFit: "cover", objectPosition: "center",
           }}
         />
         {/* 主图背景 — 手机 */}
-        <div className="hero-bg-mobile"
+        <img
+          src="/hero-mobile.jpg"
+          alt="ADDA Architecture"
+          className="hero-bg-mobile"
           style={{
             position: "absolute", inset: 0,
-            backgroundImage: "url(/hero-mobile.jpg)",
-            backgroundSize: "100% auto", backgroundPosition: "center center",
-            backgroundRepeat: "no-repeat",
+            width: "100%", height: "100%",
+            objectFit: "cover", objectPosition: "center center",
             display: "none",
           }}
         />
