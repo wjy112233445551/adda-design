@@ -38,10 +38,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# local-only admin APIs (filesystem access, not for Vercel)
-src/app/api/browse/
+# local-only admin APIs (not for Vercel)
 src/app/api/preview/
-src/app/api/deploy/
 data/deploy.json
 33coffee/
 adda-studio/

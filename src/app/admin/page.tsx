@@ -190,9 +190,13 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
                     <option value="">已导入的项目...</option>
                     {folders.map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
+                  {typeof window !== 'undefined' && window.location.hostname === 'localhost' ? (
                   <FileBrowser onImport={(folderName:string) => { setForm({...form,folder:folderName,cover:""}); }}>
                     <span style={{ fontFamily:"var(--font-body)", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.5)", padding:"8px 12px", fontSize:11, cursor:"pointer", whiteSpace:"nowrap" }}>📁 浏览电脑文件夹...</span>
                   </FileBrowser>
+                  ) : (
+                    <span style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.15)", fontSize:10, padding:"8px 12px" }}>💡 导入项目请使用本地 localhost 管理后台</span>
+                  )}
                 </div>
               </div>
               {form.folder && folderImgs.length > 0 && (
