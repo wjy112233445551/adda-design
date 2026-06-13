@@ -75,6 +75,7 @@ export function ProjectCard({
             ref={imgRef}
             src={project.cover}
             alt={project.title}
+            loading="lazy"
             className="w-full aspect-[4/3] object-cover rounded-lg"
           />
         </div>

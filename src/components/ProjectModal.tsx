@@ -151,6 +151,7 @@ function Thumbnail({ src, alt }: { src: string; alt: string }) {
             <img
               src={src}
               alt={alt}
+              loading="lazy"
               className="max-w-[92vw] max-h-[92vh] object-contain"
               onClick={(e) => e.stopPropagation()}
             />
