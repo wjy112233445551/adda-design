@@ -69,7 +69,7 @@ export function Navigation() {
                 <div className={`absolute top-full left-1/2 -translate-x-1/2 pt-1.5 pb-1.5 min-w-[150px] transition-all duration-200 ${openDropdown === link.num ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-1 pointer-events-none"}`}
                   style={{ background: "rgba(18,18,18,0.92)", backdropFilter: "blur(20px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }}>
                   {(link.num === "01" ? categories : link.dropdownItems || []).map((item: any) => {
-                    const href = link.num === "01" ? (item.value ? `/?category=${item.value}` : "/") : item.href;
+                    const href = link.num === "01" ? `/?category=${item.value}` : item.href;
                     const itemActive = link.num === "01" ? currentCategory === item.value : false;
                     return (
                       <a key={item.label} href={href}
