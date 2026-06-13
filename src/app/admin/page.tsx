@@ -1051,7 +1051,8 @@ function FileBrowser({ children, onImport }: { children: React.ReactNode; onImpo
                       padding:"32px", border:"2px dashed rgba(255,255,255,0.15)", borderRadius:8,
                       cursor: uploading ? "wait" : "pointer", opacity: uploading ? 0.5 : 1,
                     }}>
-                    <input type="file" webkitdirectory="" multiple="" accept="image/*"
+                    <input type="file" accept="image/*"
+                      {...({ webkitdirectory: "", multiple: true } as any)}
                       style={{ display:"none" }}
                       disabled={uploading}
                       onChange={handleVercelUpload} />
