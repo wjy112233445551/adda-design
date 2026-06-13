@@ -23,17 +23,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // 全部: 合并住宅+商业+效果图；具体分类: 单独请求
-    if (!category) {
-      Promise.all([
-        fetch("/api/projects").then(r => r.json()),
-        fetch("/api/renderings").then(r => r.json().catch(() => [])),
-      ]).then(([p, r]) => setProjects([...p, ...r]));
-    } else if (category === "rendering") {
-      fetch("/api/renderings").then(r => r.json()).then(setProjects);
-    } else {
-      fetch("/api/projects").then(r => r.json()).then(setProjects);
-    }
+    const api = category === "rendering" ? "/api/renderings" : "/api/projects";
+    fetch(api).then(r => r.json()).then(setProjects);
   }, [category]);
 
   // Listen for close-modal event from nav ADDA click
