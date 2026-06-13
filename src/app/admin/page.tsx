@@ -190,13 +190,9 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
                     <option value="">已导入的项目...</option>
                     {folders.map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
-                  {typeof window !== 'undefined' && window.location.hostname === 'localhost' ? (
                   <FileBrowser onImport={(folderName:string) => { setForm({...form,folder:folderName,cover:""}); }}>
                     <span style={{ fontFamily:"var(--font-body)", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.5)", padding:"8px 12px", fontSize:11, cursor:"pointer", whiteSpace:"nowrap" }}>📁 浏览电脑文件夹...</span>
                   </FileBrowser>
-                  ) : (
-                    <span style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.15)", fontSize:10, padding:"8px 12px" }}>💡 导入项目请使用本地 localhost 管理后台</span>
-                  )}
                 </div>
               </div>
               {form.folder && folderImgs.length > 0 && (
@@ -848,6 +844,71 @@ function JoinForm() {
   );
 }
 
+// ====== GitHub API upload helper ======
+async function uploadFolderToGitHub(files: FileList, folderName: string, token: string): Promise<string> {
+  const GITHUB_API = "https://api.github.com/repos/wjy112233445551/adda-design";
+  const headers = { "Authorization": `token ${token}`, "Accept": "application/vnd.github+json" };
+
+  // 获取当前 head ref
+  const refResp = await fetch(`${GITHUB_API}/git/refs/heads/main`, { headers });
+  const refData = await refResp.json();
+  const baseSha = refData.object.sha;
+  const baseCommitResp = await fetch(`${GITHUB_API}/git/commits/${baseSha}`, { headers });
+  const baseCommit = await baseCommitResp.json();
+  const baseTreeSha = baseCommit.tree.sha;
+
+  // 逐个文件创建 blob
+  const treeItems: { path: string; mode: string; type: string; sha: string }[] = [];
+  let done = 0;
+
+  for (const file of Array.from(files)) {
+    // 跳过非图片
+    if (!/\.(jpg|jpeg|png|webp|gif)$/i.test(file.name)) continue;
+    const content = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(",")[1]);
+      reader.readAsDataURL(file);
+    });
+    const blobResp = await fetch(`${GITHUB_API}/git/blobs`, {
+      method: "POST", headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ content, encoding: "base64" }),
+    });
+    const blobData = await blobResp.json();
+    if (blobData.sha) {
+      treeItems.push({ path: `public/projects/${folderName}/${file.name}`, mode: "100644", type: "blob", sha: blobData.sha });
+      done++;
+    }
+  }
+
+  if (treeItems.length === 0) throw new Error("没有找到图片文件");
+
+  // 创建 tree
+  const treeResp = await fetch(`${GITHUB_API}/git/trees`, {
+    method: "POST", headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems }),
+  });
+  const treeData = await treeResp.json();
+
+  // 创建 commit
+  const commitResp = await fetch(`${GITHUB_API}/git/commits`, {
+    method: "POST", headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message: `admin: upload ${folderName} (${done} images)`,
+      tree: treeData.sha,
+      parents: [baseSha],
+    }),
+  });
+  const commitData = await commitResp.json();
+
+  // 更新 ref
+  await fetch(`${GITHUB_API}/git/refs/heads/main`, {
+    method: "PATCH", headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({ sha: commitData.sha, force: false }),
+  });
+
+  return `✅ 已上传 ${done} 张图片到 GitHub（${folderName}），Vercel 将自动部署`;
+}
+
 // ====== File Browser ======
 function FileBrowser({ children, onImport }: { children: React.ReactNode; onImport: (folder: string) => void }) {
   const { onSelectMouseDown: fbSelect, onBackdropClick: fbBackdrop } = useModalBackdrop();
@@ -856,7 +917,16 @@ function FileBrowser({ children, onImport }: { children: React.ReactNode; onImpo
   const [dirs, setDirs] = useState<string[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [msg, setMsg] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
+  const [token, setToken] = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("adda_github_token") || "";
+    return "";
+  });
 
+  const isLocal = typeof window !== "undefined" && window.location.hostname === "localhost";
+
+  // ── localhost: filesystem browse ──
   const browse = async (p: string) => {
     try {
       const r = await fetch(`/api/browse?action=browse&path=${encodeURIComponent(p)}`);
@@ -877,52 +947,127 @@ function FileBrowser({ children, onImport }: { children: React.ReactNode; onImpo
     else setMsg("导入失败");
   };
 
+  // ── Vercel: GitHub API upload ──
+  const handleVercelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    if (!token) { setMsg("请先在 Deploy 页面设置 GitHub Token"); return; }
+
+    // 取第一个文件的父文件夹名
+    const firstPath = (files[0] as any).webkitRelativePath || files[0].name;
+    const folderName = firstPath.includes("/") ? firstPath.split("/")[0] : prompt("输入项目文件夹名:") || "new-project";
+
+    setUploading(true);
+    setUploadProgress(`上传中... 0/${files.length}`);
+    try {
+      const result = await uploadFolderToGitHub(files, folderName, token);
+      setMsg(result);
+      setUploadProgress("");
+      onImport(folderName);
+      setOpen(false);
+    } catch (err: any) {
+      setMsg(`❌ ${err.message}`);
+    }
+    setUploading(false);
+    e.target.value = "";
+  };
+
+  const saveToken = () => { localStorage.setItem("adda_github_token", token); setMsg("Token 已保存"); };
+
   return (
     <>
-      <span onClick={() => { setOpen(true); browse(path); }}>{children}</span>
+      <span onClick={() => { setOpen(true); if (isLocal) browse(path); }}>{children}</span>
       {open && (
         <div style={{ position:"fixed", inset:0, zIndex:500, background:"rgba(0,0,0,0.9)", display:"flex", alignItems:"center", justifyContent:"center" }} onClick={() => fbBackdrop(() => setOpen(false))}>
           <div style={{ background:"#111", border:"1px solid rgba(255,255,255,0.1)", width:700, maxHeight:"80vh", display:"flex", flexDirection:"column" }} onClick={e => e.stopPropagation()}>
+
             <div style={{ display:"flex", justifyContent:"space-between", padding:"12px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
-              <h3 style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.6)", fontSize:12, margin:0 }}>选择图片文件夹</h3>
+              <h3 style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.6)", fontSize:12, margin:0 }}>
+                {isLocal ? "选择图片文件夹" : "上传图片文件夹（通过 GitHub）"}
+              </h3>
               <button onClick={() => setOpen(false)} style={{ background:"none", border:"none", color:"rgba(255,255,255,0.4)", fontSize:18, cursor:"pointer" }}>✕</button>
             </div>
-            {/* Breadcrumb */}
-            <div style={{ padding:"8px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", display:"flex", gap:4, flexWrap:"wrap" }}>
-              {path.split("/").filter(Boolean).reduce((acc: string[], p: string) => [...acc, (acc.length ? acc[acc.length-1]+"/"+p : "/"+p)], [] as string[]).map((p, i) => (
-                <span key={p} style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.3)", fontSize:10, cursor:"pointer" }} onClick={() => browse(p)}>
-                  {i > 0 && <span style={{ color:"rgba(255,255,255,0.1)", margin:"0 2px" }}>/</span>}
-                  {p.split("/").pop()}
-                </span>
-              ))}
-            </div>
-            {/* Content */}
-            <div style={{ flex:1, overflow:"auto", padding:16 }}>
-              {dirs.map(d => (
-                <div key={d} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 12px", cursor:"pointer" }}
-                  onClick={() => browse(path + "/" + d)}>
-                  <span style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.6)", fontSize:13 }}>📁 {d}</span>
-                  <button onClick={e => { e.stopPropagation(); importF(path + "/" + d); }}
-                    style={{ fontFamily:"var(--font-body)", background:"none", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.4)", fontSize:10, padding:"4px 8px", cursor:"pointer", letterSpacing:"0.1em", textTransform:"uppercase" }}>
-                    导入此文件夹
-                  </button>
-                </div>
-              ))}
-              {images.length > 0 && (
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(6,1fr)", gap:4, marginTop:8 }}>
-                  {images.slice(0, 24).map(img => (
-                    <div key={img} style={{ aspectRatio:"1", background:"rgba(0,0,0,0.3)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                      <img src={`/api/preview?path=${encodeURIComponent(path+"/"+img)}`} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}
-                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    </div>
+
+            {isLocal ? (
+              <>
+                {/* localhost mode */}
+                <div style={{ padding:"8px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", display:"flex", gap:4, flexWrap:"wrap" }}>
+                  {path.split("/").filter(Boolean).reduce((acc: string[], p: string) => [...acc, (acc.length ? acc[acc.length-1]+"/"+p : "/"+p)], [] as string[]).map((p, i) => (
+                    <span key={p} style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.3)", fontSize:10, cursor:"pointer" }} onClick={() => browse(p)}>
+                      {i > 0 && <span style={{ color:"rgba(255,255,255,0.1)", margin:"0 2px" }}>/</span>}
+                      {p.split("/").pop()}
+                    </span>
                   ))}
                 </div>
-              )}
-              {dirs.length === 0 && images.length === 0 && (
-                <p style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.2)", fontSize:12, textAlign:"center", padding:32 }}>空文件夹</p>
-              )}
-            </div>
-            {msg && <div style={{ padding:"8px 16px", borderTop:"1px solid rgba(255,255,255,0.06)" }}><p style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.4)", fontSize:10, margin:0 }}>{msg}</p></div>}
+                <div style={{ flex:1, overflow:"auto", padding:16 }}>
+                  {dirs.map(d => (
+                    <div key={d} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 12px", cursor:"pointer" }}
+                      onClick={() => browse(path + "/" + d)}>
+                      <span style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.6)", fontSize:13 }}>📁 {d}</span>
+                      <button onClick={e => { e.stopPropagation(); importF(path + "/" + d); }}
+                        style={{ fontFamily:"var(--font-body)", background:"none", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.4)", fontSize:10, padding:"4px 8px", cursor:"pointer", letterSpacing:"0.1em", textTransform:"uppercase" }}>
+                        导入此文件夹
+                      </button>
+                    </div>
+                  ))}
+                  {images.length > 0 && (
+                    <div style={{ display:"grid", gridTemplateColumns:"repeat(6,1fr)", gap:4, marginTop:8 }}>
+                      {images.slice(0, 24).map(img => (
+                        <div key={img} style={{ aspectRatio:"1", background:"rgba(0,0,0,0.3)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                          <img src={`/api/preview?path=${encodeURIComponent(path+"/"+img)}`} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}
+                            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {dirs.length === 0 && images.length === 0 && (
+                    <p style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.2)", fontSize:12, textAlign:"center", padding:32 }}>空文件夹</p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Vercel mode: GitHub token + folder picker */}
+                <div style={{ padding:24, display:"flex", flexDirection:"column", gap:16 }}>
+                  <div>
+                    <label style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.3)", fontSize:10, display:"block", marginBottom:6, textTransform:"uppercase" }}>
+                      GitHub Personal Access Token
+                    </label>
+                    <div style={{ display:"flex", gap:8 }}>
+                      <input type="password" value={token} onChange={e => setToken(e.target.value)}
+                        placeholder="ghp_xxxxxxxxxxxx"
+                        style={{ flex:1, background:"transparent", border:"1px solid rgba(255,255,255,0.1)", padding:"8px 12px", color:"rgba(255,255,255,0.8)", fontSize:12, outline:"none", fontFamily:"monospace" }} />
+                      <button onClick={saveToken}
+                        style={{ fontFamily:"var(--font-body)", background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.1)", color:"#fff", padding:"8px 12px", fontSize:11, cursor:"pointer" }}>保存</button>
+                    </div>
+                    <p style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.15)", fontSize:9, margin:"6px 0 0" }}>
+                      在 <a href="https://github.com/settings/tokens" target="_blank" style={{ color:"rgba(255,255,255,0.4)" }}>github.com/settings/tokens</a> 生成 classic token，勾选 repo 权限
+                    </p>
+                  </div>
+
+                  <label
+                    style={{
+                      display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                      padding:"32px", border:"2px dashed rgba(255,255,255,0.15)", borderRadius:8,
+                      cursor: uploading ? "wait" : "pointer", opacity: uploading ? 0.5 : 1,
+                    }}>
+                    <input type="file" webkitdirectory="" multiple="" accept="image/*"
+                      style={{ display:"none" }}
+                      disabled={uploading}
+                      onChange={handleVercelUpload} />
+                    <span style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.4)", fontSize:13 }}>
+                      {uploading ? `⏳ ${uploadProgress}` : "📁 选择一个图片文件夹"}
+                    </span>
+                  </label>
+                </div>
+              </>
+            )}
+
+            {msg && (
+              <div style={{ padding:"8px 16px", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
+                <p style={{ fontFamily:"var(--font-body)", color: msg.startsWith("✅") ? "rgba(100,255,100,0.6)" : msg.startsWith("❌") ? "rgba(255,80,80,0.6)" : "rgba(255,255,255,0.4)", fontSize:10, margin:0 }}>{msg}</p>
+              </div>
+            )}
           </div>
         </div>
       )}
