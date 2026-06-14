@@ -11,9 +11,8 @@ import gsap from "gsap";
 function preloadHeroImage() {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const heroSrc = isMobile ? "/hero-mobile.webp" : "/hero.webp";
-  const fallbackSrc = isMobile ? "/hero-mobile.jpg" : "/hero.jpg";
 
-  // 优先预加载 WebP，同时预加载 JPEG 作为不支持 WebP 的兜底
+  // 仅预加载 WebP（99%+ 浏览器支持），不浪费 8.9MB 加载 JPEG 兜底
   const link = document.createElement("link");
   link.rel = "preload";
   link.as = "image";
@@ -21,12 +20,9 @@ function preloadHeroImage() {
   link.fetchPriority = "high";
   document.head.appendChild(link);
 
-  // 兜底：通过 Image 对象双保险预加载（兼容不支持 link preload 的环境）
+  // Image 对象双保险预加载
   const img = new Image();
   img.src = heroSrc;
-  // JPEG 兜底图也一并预加载
-  const imgFallback = new Image();
-  imgFallback.src = fallbackSrc;
 }
 
 export function Preloader() {

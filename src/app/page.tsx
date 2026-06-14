@@ -181,7 +181,7 @@ export default function Home() {
             }}
           />
         </picture>
-        {/* 主图背景 — 手机（WebP 优先 + JPEG 兜底） */}
+        {/* 主图背景 — 手机（WebP 优先 + JPEG 兜底；lazy 避免桌面端浪费加载） */}
         <picture
           className="hero-bg-mobile"
           style={{ display: "none" }}
@@ -190,6 +190,7 @@ export default function Home() {
           <img
             src="/hero-mobile.jpg"
             alt="ADDA Architecture"
+            loading="lazy"
             style={{
               position: "absolute", inset: 0,
               width: "100%", height: "100%",
@@ -360,6 +361,7 @@ export default function Home() {
                 <img
                   src={carouselProjects[0].cover}
                   alt={carouselProjects[0].title}
+                  loading="lazy"
                   className="w-full aspect-[16/9] object-cover"
                 />
                 <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 bg-gradient-to-t from-black/60 to-transparent">
