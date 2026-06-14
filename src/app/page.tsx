@@ -170,8 +170,8 @@ export default function Home() {
       <section className="hero-section" style={{ height: "100dvh", minHeight: "100svh", position: "relative", overflow: "hidden" }}>
         {/* 主图背景 — 响应式 WebP：通过 <source media> 自动选择桌面/手机尺寸，只加载一张 */}
         <picture>
-          <source srcSet="/hero.webp?v=2" type="image/webp" media="(min-width: 768px)" />
-          <source srcSet="/hero-mobile.webp?v=2" type="image/webp" />
+          <source srcSet="/hero.webp?v=3" type="image/webp" media="(min-width: 768px)" />
+          <source srcSet="/hero-mobile.webp?v=3" type="image/webp" />
           <source srcSet="/hero.jpg" type="image/jpeg" media="(min-width: 768px)" />
           <img
             src="/hero-mobile.jpg"
