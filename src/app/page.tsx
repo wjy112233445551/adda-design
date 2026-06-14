@@ -167,30 +167,36 @@ export default function Home() {
     <>
       {/* ═══ Hero 大图 + 左下角简介（响应式） ═══ */}
       <section className="hero-section" style={{ height: "100dvh", minHeight: "100svh", position: "relative", overflow: "hidden" }}>
-        {/* 主图背景 — 桌面（用 img 标签确保高优先级加载，避免背景图超时黑屏） */}
-        <img
-          src="/hero.jpg"
-          alt="ADDA Architecture"
-          fetchPriority="high"
-          className="hero-bg hero-bg-desktop"
-          style={{
-            position: "absolute", inset: 0,
-            width: "100%", height: "100%",
-            objectFit: "cover", objectPosition: "center",
-          }}
-        />
-        {/* 主图背景 — 手机 */}
-        <img
-          src="/hero-mobile.jpg"
-          alt="ADDA Architecture"
+        {/* 主图背景 — 桌面（WebP 优先 + JPEG 兜底；preloader 阶段已预加载） */}
+        <picture className="hero-bg hero-bg-desktop">
+          <source srcSet="/hero.webp" type="image/webp" />
+          <img
+            src="/hero.jpg"
+            alt="ADDA Architecture"
+            fetchPriority="high"
+            style={{
+              position: "absolute", inset: 0,
+              width: "100%", height: "100%",
+              objectFit: "cover", objectPosition: "center",
+            }}
+          />
+        </picture>
+        {/* 主图背景 — 手机（WebP 优先 + JPEG 兜底） */}
+        <picture
           className="hero-bg-mobile"
-          style={{
-            position: "absolute", inset: 0,
-            width: "100%", height: "100%",
-            objectFit: "cover", objectPosition: "center center",
-            display: "none",
-          }}
-        />
+          style={{ display: "none" }}
+        >
+          <source srcSet="/hero-mobile.webp" type="image/webp" />
+          <img
+            src="/hero-mobile.jpg"
+            alt="ADDA Architecture"
+            style={{
+              position: "absolute", inset: 0,
+              width: "100%", height: "100%",
+              objectFit: "cover", objectPosition: "center center",
+            }}
+          />
+        </picture>
         {/* 暗色渐变覆盖 */}
         <div className="hero-overlay"
           style={{

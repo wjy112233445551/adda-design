@@ -1,114 +1,101 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 
-const PUBLIC_DIR = path.join(process.cwd(), "public", "projects");
+export const dynamic = "force-dynamic";
+
 const IS_VERCEL = !!process.env.VERCEL;
 
-// Safe directory listing
-function listDir(dirPath: string) {
+/**
+ * 从 project-images.ts + projects.ts 静态导入获取所有合法项目文件夹名。
+ * 完全避免在编译时常量上做 path.join(PUBLIC_DIR, unknown)，从而避开
+ * Turbopack 将 public/projects/ 下 18816 个文件全部追踪打包的问题。
+ */
+let _folderWhitelist: Set<string> | null = null;
+async function getValidFolders(): Promise<Set<string>> {
+  if (_folderWhitelist) return _folderWhitelist;
+  _folderWhitelist = new Set();
   try {
-    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-    const dirs = entries
-      .filter((e) => e.isDirectory() && !e.name.startsWith("."))
-      .map((e) => ({ name: e.name, type: "directory" }));
-    const images = entries
-      .filter((e) => e.isFile() && /\.(jpg|jpeg|png|webp|gif)$/i.test(e.name))
-      .map((e) => ({ name: e.name, type: "image" }));
-    return { dirs, images, path: dirPath };
-  } catch {
-    return { dirs: [], images: [], path: dirPath, error: "Cannot read directory" };
-  }
+    const { projectImages } = await import("@/lib/project-images");
+    for (const k of Object.keys(projectImages as Record<string, string[]>)) {
+      _folderWhitelist.add(k);
+    }
+  } catch { /* 文件不存在则跳过 */ }
+  try {
+    const { projects } = await import("@/lib/projects");
+    for (const p of projects as Array<{ folder: string }>) {
+      _folderWhitelist.add(p.folder);
+    }
+  } catch { /* 文件不存在则跳过 */ }
+  return _folderWhitelist;
 }
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const action = searchParams.get("action");
 
-  // ── Vercel 不支持的功能 ──
-  if (IS_VERCEL && (action === "browse" || action === "import")) {
-    return NextResponse.json({ error: "本地文件浏览和导入仅在本地环境可用。请使用 localhost 管理后台导入项目，Vercel 版可管理已有项目。" }, { status: 400 });
-  }
-
-  // ── 浏览本地电脑目录 ──
-  if (action === "browse") {
-    const dirPath = searchParams.get("path") || "/Users";
-    return NextResponse.json(listDir(dirPath));
-  }
-
-  // ── 导入文件夹 ──
-  if (action === "import") {
-    const sourcePath = searchParams.get("path");
-    const folderName = searchParams.get("name") || path.basename(sourcePath || "");
-
-    if (!sourcePath || !fs.existsSync(sourcePath)) {
-      return NextResponse.json({ error: "Source not found" }, { status: 404 });
+  // ── 本地专属：浏览电脑目录 / 导入文件夹 ──
+  // Turbopack 不会追踪动态 require 内部的 fs 调用
+  if (action === "browse" || action === "import") {
+    if (IS_VERCEL) {
+      return NextResponse.json(
+        { error: "本地文件浏览和导入仅在本地环境可用。请使用 localhost 管理后台导入项目，Vercel 版可管理已有项目。" },
+        { status: 400 }
+      );
     }
-
-    const destDir = path.join(PUBLIC_DIR, folderName);
-    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
-
-    let count = 0;
-    function copyImages(src: string) {
-      const entries = fs.readdirSync(src, { withFileTypes: true });
-      for (const e of entries) {
-        if (e.name.startsWith(".")) continue;
-        const full = path.join(src, e.name);
-        if (e.isDirectory()) {
-          copyImages(full);
-        } else if (/\.(jpg|jpeg|png|webp)$/i.test(e.name)) {
-          const dest = path.join(destDir, e.name);
-          fs.copyFileSync(full, dest);
-          count++;
-        }
+    // 动态 require，编译期不可追踪
+    const localFs = require("./local-fs");
+    if (action === "browse") {
+      const dirPath = searchParams.get("path") || "/Users";
+      return NextResponse.json(localFs.browseLocalDir(dirPath));
+    }
+    if (action === "import") {
+      const sourcePath = searchParams.get("path");
+      const folderName = searchParams.get("name") || "";
+      const result = localFs.importImagesFrom(sourcePath, folderName);
+      if ("error" in result) {
+        return NextResponse.json(result, { status: 404 });
       }
+      // 清除白名单缓存
+      _folderWhitelist = null;
+      return NextResponse.json(result);
     }
-    copyImages(sourcePath);
-
-    return NextResponse.json({ success: true, count, folder: folderName });
   }
 
-  // List project folders (for dropdown)
+  // ══════════════════════════════════════════════
+  // 以下为生产环境调用，全部走静态导入，无动态 fs 路径
+  // ══════════════════════════════════════════════
+
   const folder = searchParams.get("folder");
+
+  // ── 列出所有项目文件夹 ──
   if (!folder) {
-    const dirs = fs.existsSync(PUBLIC_DIR)
-      ? fs.readdirSync(PUBLIC_DIR).filter((f) => {
-          const full = path.join(PUBLIC_DIR, f);
-          return fs.statSync(full).isDirectory() && !f.startsWith(".");
-        })
-      : [];
-    return NextResponse.json(dirs);
+    const validFolders = await getValidFolders();
+    return NextResponse.json([...validFolders].sort());
   }
 
-  // List images in a folder — 与主站 page.tsx 顺序一致
-  const folderPath = path.join(PUBLIC_DIR, folder);
-  if (!fs.existsSync(folderPath)) {
-    return NextResponse.json({ error: "Folder not found" }, { status: 404 });
-  }
-
-  // 优先用 projectImages（与主站一致），缺文件时补齐
+  // ── 列出文件夹内图片 ──
+  // 先通过静态导入 projectImages 获取
   try {
     const { projectImages } = await import("@/lib/project-images");
     const mapped = (projectImages as Record<string, string[]>)[folder];
     if (mapped && mapped.length > 0) {
-      const mappedFiles = new Set(mapped.map((f: string) => path.basename(f)));
-      const fsFiles = new Set(fs.readdirSync(folderPath).filter((f: string) => /\.(jpg|jpeg|png|webp)$/i.test(f)));
-      // 补齐文件系统中新增的图片
-      const result = [...mapped];
-      for (const f of fs.readdirSync(folderPath)) {
-        if (/\.(jpg|jpeg|png|webp)$/i.test(f) && !mappedFiles.has(f)) {
-          result.push(`/projects/${folder}/${f}`);
-        }
-      }
-      return NextResponse.json(result);
+      return NextResponse.json(mapped);
     }
-  } catch {}
+  } catch { /* 文件不存在则跳过 */ }
 
-  const images = fs
-    .readdirSync(folderPath)
-    .filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f as string))
-    .sort()
-    .map((f) => `/projects/${folder}/${f as string}`);
+  // 安全兜底：验证 folder 在白名单中
+  const validFolders = await getValidFolders();
+  if (!validFolders.has(folder)) {
+    return NextResponse.json(
+      { error: "Folder not found", folder },
+      { status: 404 }
+    );
+  }
 
+  // 只有在此兜底分支才会读文件系统，且 folder 已通过白名单校验
+  const localFs = require("./local-fs");
+  const images = localFs.listProjectImages(folder);
+  if (!images) {
+    return NextResponse.json({ error: "Cannot read folder", folder }, { status: 500 });
+  }
   return NextResponse.json(images);
 }

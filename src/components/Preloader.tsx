@@ -3,6 +3,32 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 
+/**
+ * 判断当前设备是否需要加载移动端 hero（宽度 < 768px）
+ * 在 preloader 阶段就开始预加载对应尺寸的 hero.webp，
+ * 确保用户点击 Enter 后 hero 大图已在浏览器缓存中，即点即显。
+ */
+function preloadHeroImage() {
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const heroSrc = isMobile ? "/hero-mobile.webp" : "/hero.webp";
+  const fallbackSrc = isMobile ? "/hero-mobile.jpg" : "/hero.jpg";
+
+  // 优先预加载 WebP，同时预加载 JPEG 作为不支持 WebP 的兜底
+  const link = document.createElement("link");
+  link.rel = "preload";
+  link.as = "image";
+  link.href = heroSrc;
+  link.fetchPriority = "high";
+  document.head.appendChild(link);
+
+  // 兜底：通过 Image 对象双保险预加载（兼容不支持 link preload 的环境）
+  const img = new Image();
+  img.src = heroSrc;
+  // JPEG 兜底图也一并预加载
+  const imgFallback = new Image();
+  imgFallback.src = fallbackSrc;
+}
+
 export function Preloader() {
   const containerRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
@@ -18,6 +44,9 @@ export function Preloader() {
       return;
     }
     started.current = true;
+
+    // 🚀 关键：在 preloader 展示阶段立即开始预加载 hero 大图
+    preloadHeroImage();
 
     const doExit = () => {
       if (exitTimeline.current) return;

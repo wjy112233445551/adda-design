@@ -1052,7 +1052,9 @@ function FileBrowser({ children, onImport }: { children: React.ReactNode; onImpo
                       cursor: uploading ? "wait" : "pointer", opacity: uploading ? 0.5 : 1,
                     }}>
                     <input type="file" accept="image/*"
-                      {...({ webkitdirectory: "", multiple: true } as any)}
+                      // @ts-expect-error webkitdirectory is non-standard but widely supported
+                      webkitdirectory=""
+                      multiple
                       style={{ display:"none" }}
                       disabled={uploading}
                       onChange={handleVercelUpload} />
