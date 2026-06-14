@@ -10,7 +10,7 @@ import gsap from "gsap";
  */
 function preloadHeroImage() {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-  const heroSrc = isMobile ? "/hero-mobile.webp" : "/hero.webp";
+  const heroSrc = isMobile ? "/hero-mobile.webp?v=2" : "/hero.webp?v=2";
 
   // 仅预加载 WebP（99%+ 浏览器支持），不浪费 8.9MB 加载 JPEG 兜底
   const link = document.createElement("link");
