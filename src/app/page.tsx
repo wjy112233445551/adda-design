@@ -167,34 +167,19 @@ export default function Home() {
     <>
       {/* ═══ Hero 大图 + 左下角简介（响应式） ═══ */}
       <section className="hero-section" style={{ height: "100dvh", minHeight: "100svh", position: "relative", overflow: "hidden" }}>
-        {/* 主图背景 — 桌面（WebP 优先 + JPEG 兜底；preloader 阶段已预加载） */}
-        <picture className="hero-bg hero-bg-desktop">
-          <source srcSet="/hero.webp" type="image/webp" />
+        {/* 主图背景 — 响应式 WebP：通过 <source media> 自动选择桌面/手机尺寸，只加载一张 */}
+        <picture>
+          <source srcSet="/hero.webp" type="image/webp" media="(min-width: 768px)" />
+          <source srcSet="/hero-mobile.webp" type="image/webp" />
+          <source srcSet="/hero.jpg" type="image/jpeg" media="(min-width: 768px)" />
           <img
-            src="/hero.jpg"
+            src="/hero-mobile.jpg"
             alt="ADDA Architecture"
             fetchPriority="high"
             style={{
               position: "absolute", inset: 0,
               width: "100%", height: "100%",
               objectFit: "cover", objectPosition: "center",
-            }}
-          />
-        </picture>
-        {/* 主图背景 — 手机（WebP 优先 + JPEG 兜底；lazy 避免桌面端浪费加载） */}
-        <picture
-          className="hero-bg-mobile"
-          style={{ display: "none" }}
-        >
-          <source srcSet="/hero-mobile.webp" type="image/webp" />
-          <img
-            src="/hero-mobile.jpg"
-            alt="ADDA Architecture"
-            loading="lazy"
-            style={{
-              position: "absolute", inset: 0,
-              width: "100%", height: "100%",
-              objectFit: "cover", objectPosition: "center center",
             }}
           />
         </picture>
