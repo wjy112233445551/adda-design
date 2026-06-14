@@ -165,7 +165,8 @@ export default function Home() {
 
   return (
     <>
-      {/* ═══ Hero 大图 + 左下角简介（响应式） ═══ */}
+      {/* ═══ Hero 大图 + 左下角简介（响应式） — 仅首页"全部"显示 ═══ */}
+      {!category && (
       <section className="hero-section" style={{ height: "100dvh", minHeight: "100svh", position: "relative", overflow: "hidden" }}>
         {/* 主图背景 — 响应式 WebP：通过 <source media> 自动选择桌面/手机尺寸，只加载一张 */}
         <picture>
@@ -259,6 +260,7 @@ export default function Home() {
         </div>
 
       </section>
+      )}
 
       {/* ═══ 项目内容 ═══ */}
       <div className="max-w-[1400px] mx-auto px-6 pt-24 pb-16">
