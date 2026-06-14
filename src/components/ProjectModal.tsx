@@ -432,7 +432,13 @@ export function ProjectModal({
             {/* 杂志风画廊 — 图文穿插 */}
             {images.length > 1 && (
               <div ref={galleryRef}>
-                <MagazineGallery images={images.slice(1)} title={project.title} captions={(project as any).captions} galleryOrder={(project as any).galleryOrder} coverPath={project.cover} />
+                <MagazineGallery
+                  images={images.filter((_, i) => i !== ((project as any).galleryOrder?.[0] ?? 0))}
+                  title={project.title}
+                  captions={(project as any).captions}
+                  galleryOrder={(project as any).galleryOrder}
+                  coverPath={project.cover}
+                />
               </div>
             )}
           </div>
