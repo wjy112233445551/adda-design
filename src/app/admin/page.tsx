@@ -1100,6 +1100,15 @@ function FileBrowser({ children, onImport }: { children: React.ReactNode; onImpo
 function DeployBtn() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [token, setToken] = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("adda_github_token") || "";
+    return "";
+  });
+
+  const saveToken = () => {
+    localStorage.setItem("adda_github_token", token);
+    setMsg("✅ Token 已保存");
+  };
 
   const deploy = async () => {
     setLoading(true); setMsg("部署中...");
@@ -1112,16 +1121,35 @@ function DeployBtn() {
   };
 
   return (
-    <div style={{ maxWidth:400 }}>
+    <div style={{ maxWidth:500 }}>
       <h2 style={{ fontFamily:"var(--font-display)", color:"#fff", fontSize:20, margin:"0 0 16px" }}>部署上线</h2>
-      <p style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.3)", fontSize:11, lineHeight:1.6, marginBottom:24 }}>
+
+      {/* GitHub Token */}
+      <div style={{ marginBottom:24, padding:"16px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6 }}>
+        <p style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.5)", fontSize:11, margin:"0 0 8px" }}>GitHub Personal Access Token</p>
+        <p style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.2)", fontSize:9, lineHeight:1.5, marginBottom:12 }}>
+          需要 repo 权限。在 GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens 创建。<br/>
+          选择仓库 wjy112233445551/adda-design，权限: Contents (Read & Write)。
+        </p>
+        <div style={{ display:"flex", gap:8 }}>
+          <input type="password" value={token} onChange={e => setToken(e.target.value)} placeholder="ghp_xxxxxxxxxxxx"
+            style={{ flex:1, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", padding:"8px 12px", color:"#fff", fontSize:11, outline:"none", fontFamily:"monospace" }} />
+          <button onClick={saveToken}
+            style={{ fontFamily:"var(--font-body)", background:"rgba(255,255,255,0.1)", border:"none", color:"#fff", padding:"8px 16px", fontSize:11, cursor:"pointer", whiteSpace:"nowrap" }}>
+            保存 Token
+          </button>
+        </div>
+      </div>
+
+      {/* Deploy button */}
+      <p style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.3)", fontSize:11, lineHeight:1.6, marginBottom:16 }}>
         编辑内容并保存后，点击按钮提交到 GitHub 并自动部署到 Vercel。
       </p>
       <button onClick={deploy} disabled={loading}
         style={{ fontFamily:"var(--font-body)", background:"rgba(255,255,255,0.1)", border:"none", color:"#fff", padding:"10px 32px", fontSize:11, cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.2em", width:"100%", opacity:loading?0.5:1 }}>
         {loading ? "部署中..." : "推送到 GitHub →"}
       </button>
-      {msg && <p style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.4)", fontSize:10, marginTop:12 }}>{msg}</p>}
+      {msg && <p style={{ fontFamily:"var(--font-body)", color:msg.startsWith("✅")?"rgba(100,255,100,0.6)":"rgba(255,255,255,0.4)", fontSize:10, marginTop:12 }}>{msg}</p>}
     </div>
   );
 }
