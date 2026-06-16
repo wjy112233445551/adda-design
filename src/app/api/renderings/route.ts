@@ -12,21 +12,28 @@ function readData() {
 
 async function saveViaGitHub(data: unknown, token: string, message: string) {
   const GITHUB = "https://api.github.com/repos/wjy112233445551/adda-design/contents/data/renderings.json";
-  const getRes = await fetch(GITHUB, {
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github.v3+json" },
-    cache: "no-store",
-  });
+  const headers = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github.v3+json" };
+
+  const getRes = await fetch(GITHUB, { headers, cache: "no-store" });
+  if (!getRes.ok) {
+    const err = await getRes.json().catch(() => ({ message: "GitHub auth failed" }));
+    throw new Error(`GitHub GET: ${err.message || getRes.statusText} (${getRes.status})`);
+  }
   const current = await getRes.json();
+
   const putRes = await fetch(GITHUB, {
     method: "PUT",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    headers: { ...headers, "Content-Type": "application/json" },
     body: JSON.stringify({
       message,
       content: Buffer.from(JSON.stringify(data, null, 2)).toString("base64"),
       sha: current.sha,
     }),
   });
-  if (!putRes.ok) throw new Error((await putRes.json()).message);
+  if (!putRes.ok) {
+    const err = await putRes.json().catch(() => ({ message: "Unknown" }));
+    throw new Error(`GitHub PUT: ${err.message || putRes.statusText} (${putRes.status})`);
+  }
 }
 
 export async function GET() {

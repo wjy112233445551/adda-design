@@ -152,13 +152,15 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
 
   const openNew = () => { setForm({ slug:"p-"+Date.now(), folder:"", title:"", titleEn:"", city:"", area:"", year:"", category:"住宅", type:"residential", cover:"", description:"", descriptionEn:"" }); setShowForm(true); };
   const openEdit = (p: Project) => { setForm({...p}); setShowForm(true); setFolderImgs([]); };
+  const [msg, setMsg] = useState("");
   const save = async () => {
     if (!form.slug) return;
     const isNew = !projects.find(p=>p.slug===form.slug);
-    await api("/api/projects", { method: isNew?"POST":"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(form) });
-    setShowForm(false); load();
+    const r = await api("/api/projects", { method: isNew?"POST":"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(form) });
+    if (!r.ok) { const d = await r.json().catch(()=>({error:"Unknown"})); setMsg("❌ "+(d.error||d.message||"保存失败")); return; }
+    setMsg("✅ 已保存"); setShowForm(false); load();
   };
-  const del = async (s: string) => { if(confirm("确认删除？")) { await api("/api/projects",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({slug:s})}); load(); }};
+  const del = async (s: string) => { if(confirm("确认删除？")) { const r = await api("/api/projects",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({slug:s})}); if(!r.ok){const d=await r.json().catch(()=>({}));setMsg("❌ "+(d.error||"删除失败"));return;} setMsg("✅ 已删除"); load(); }};
 
   return (
     <div>
@@ -253,10 +255,11 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
                 </div>
               ))}
             </div>
-            <div style={{ display:"flex", justifyContent:"space-between", marginTop:24, paddingTop:16, borderTop:"1px solid rgba(255,255,255,0.06)" }}>
+            {msg && <p style={{ fontFamily:"var(--font-body)", fontSize:10, marginTop:16, color:msg.startsWith("✅")?"rgba(100,255,100,0.6)":"rgba(255,80,80,0.6)" }}>{msg}</p>}
+            <div style={{ display:"flex", justifyContent:"space-between", marginTop:12, paddingTop:16, borderTop:"1px solid rgba(255,255,255,0.06)" }}>
               <button onClick={() => del(form.slug||"")} style={{ fontFamily:"var(--font-body)", background:"none", border:"none", color:"rgba(255,80,80,0.6)", fontSize:11, cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.1em" }}>删除</button>
               <div style={{ display:"flex", gap:12 }}>
-                <button onClick={() => setShowForm(false)} style={{ fontFamily:"var(--font-body)", background:"none", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.4)", padding:"8px 16px", fontSize:11, cursor:"pointer", textTransform:"uppercase" }}>取消</button>
+                <button onClick={() => { setShowForm(false); setMsg(""); }} style={{ fontFamily:"var(--font-body)", background:"none", border:"1px solid rgba(255,255,255,0.1)", color:"rgba(255,255,255,0.4)", padding:"8px 16px", fontSize:11, cursor:"pointer", textTransform:"uppercase" }}>取消</button>
                 <button onClick={save} style={{ fontFamily:"var(--font-body)", background:"rgba(255,255,255,0.1)", border:"none", color:"#fff", padding:"8px 24px", fontSize:11, cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.1em" }}>保存</button>
               </div>
             </div>
