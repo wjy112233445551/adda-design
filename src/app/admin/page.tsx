@@ -155,12 +155,25 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
   const [msg, setMsg] = useState("");
   const save = async () => {
     if (!form.slug) return;
+    setMsg("保存中...");
     const isNew = !projects.find(p=>p.slug===form.slug);
-    const r = await api("/api/projects", { method: isNew?"POST":"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(form) });
-    if (!r.ok) { const d = await r.json().catch(()=>({error:"Unknown"})); setMsg("❌ "+(d.error||d.message||"保存失败")); return; }
-    setMsg("✅ 已保存"); setShowForm(false); load();
+    try {
+      const r = await api("/api/projects", { method: isNew?"POST":"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(form) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || d.error) { setMsg("❌ "+(d.error||d.message||"HTTP "+r.status)); return; }
+      setMsg("✅ 已保存"); setShowForm(false); load();
+    } catch(e: any) { setMsg("❌ "+(e.message||"网络错误")); }
   };
-  const del = async (s: string) => { if(confirm("确认删除？")) { const r = await api("/api/projects",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({slug:s})}); if(!r.ok){const d=await r.json().catch(()=>({}));setMsg("❌ "+(d.error||"删除失败"));return;} setMsg("✅ 已删除"); load(); }};
+  const del = async (s: string) => {
+    if(!confirm("确认删除？")) return;
+    setMsg("删除中...");
+    try {
+      const r = await api("/api/projects",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({slug:s})});
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok||d.error){setMsg("❌ "+(d.error||d.message||"HTTP "+r.status));return;}
+      setMsg("✅ 已删除"); load();
+    } catch(e:any){setMsg("❌ "+(e.message||"网络错误"));}
+  };
 
   return (
     <div>

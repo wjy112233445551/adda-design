@@ -61,7 +61,8 @@ export async function POST(req: Request) {
   };
   list.push(newProject);
   writeProjects(list);
-  if (IS_VERCEL && token) {
+  if (IS_VERCEL) {
+    if (!token) return NextResponse.json({ error: "缺少 GitHub Token，请在 Deploy 页面设置" }, { status: 400 });
     try { await saveViaGitHub(list, token, `admin: add project ${newProject.title || newProject.slug}`); }
     catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
   }
@@ -77,7 +78,8 @@ export async function PUT(req: Request) {
   if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
   list[idx] = { ...list[idx], ...body };
   writeProjects(list);
-  if (IS_VERCEL && token) {
+  if (IS_VERCEL) {
+    if (!token) return NextResponse.json({ error: "缺少 GitHub Token" }, { status: 400 });
     try { await saveViaGitHub(list, token, `admin: update project ${body.title || body.slug}`); }
     catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
   }
@@ -93,7 +95,8 @@ export async function DELETE(req: Request) {
   const slug = body.slug;
   list = list.filter((p: { slug: string }) => p.slug !== slug);
   writeProjects(list);
-  if (IS_VERCEL && token) {
+  if (IS_VERCEL) {
+    if (!token) return NextResponse.json({ error: "缺少 GitHub Token" }, { status: 400 });
     try { await saveViaGitHub(list, token, `admin: delete project ${slug}`); }
     catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
   }

@@ -44,7 +44,10 @@ export async function GET() {
 
 async function writeAndSave(data: unknown, token: string, msg: string) {
   try { fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2)); } catch {}
-  if (IS_VERCEL && token) await saveViaGitHub(data, token, msg);
+  if (IS_VERCEL) {
+    if (!token) throw new Error("缺少 GitHub Token，请在 Deploy 页面设置");
+    await saveViaGitHub(data, token, msg);
+  }
 }
 
 export async function POST(req: Request) {
@@ -54,7 +57,8 @@ export async function POST(req: Request) {
   const list = readData();
   const newProject = { ...body, slug: body.slug || `fx_${Date.now().toString(36)}`, createdAt: new Date().toISOString() };
   list.push(newProject);
-  await writeAndSave(list, token, `admin: add rendering ${newProject.title || newProject.slug}`);
+  try { await writeAndSave(list, token, `admin: add rendering ${newProject.title || newProject.slug}`); }
+  catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
   return NextResponse.json(newProject, { status: 201 });
 }
 
@@ -66,7 +70,8 @@ export async function PUT(req: Request) {
   const idx = list.findIndex((p: any) => p.slug === body.slug);
   if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
   list[idx] = { ...list[idx], ...body };
-  await writeAndSave(list, token, `admin: update rendering ${body.title || body.slug}`);
+  try { await writeAndSave(list, token, `admin: update rendering ${body.title || body.slug}`); }
+  catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
   return NextResponse.json(list[idx]);
 }
 
@@ -76,6 +81,7 @@ export async function DELETE(req: Request) {
   const body = await req.json();
   let list = readData();
   list = list.filter((p: any) => p.slug !== body.slug);
-  await writeAndSave(list, token, `admin: delete rendering ${body.slug}`);
+  try { await writeAndSave(list, token, `admin: delete rendering ${body.slug}`); }
+  catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
   return NextResponse.json({ ok: true });
 }
