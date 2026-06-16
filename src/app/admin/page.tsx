@@ -714,23 +714,38 @@ function RenderingsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
 
 // ====== Page Forms ======
 function PageForm({ page }: { page: "about" | "contact" }) {
-  const [data, setData] = useState<Record<string,string>>({});
+  const [data, setData] = useState<Record<string,any>>({});
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
     api("/api/pages").then(r=>r.json()).then(d => {
-      if (d[page]) setData(d[page]);
+      if (d[page]) {
+        const raw = d[page];
+        // 数组字段序列化为 JSON 字符串以便在 textarea 中编辑
+        const processed: Record<string,any> = {};
+        for (const [k, v] of Object.entries(raw)) {
+          processed[k] = Array.isArray(v) ? JSON.stringify(v, null, 2) : v;
+        }
+        setData(processed);
+      }
     }).catch(()=>{});
   }, [page]);
 
   const fields = page === "about"
-    ? [["zh","中文介绍","textarea"],["en","English Intro","textarea"],["location","Location","text"],["founded","Founded","text"],["projects","Projects","text"],["clients","Clients","text"]]
-    : [["email","Email","text"],["wechat","WeChat","text"]];
+    ? [["zh","中文介绍","textarea"],["en","English Intro","textarea"],["location","Location","text"],["founded","Founded","text"],["projects","Projects","text"],["brand","品牌含义 (JSON数组)","textarea"],["honors","Awards (JSON数组)","textarea"]]
+    : [["email","邮箱 / Email","text"],["wechat","微信 / WeChat","text"]];
 
   const save = async () => {
     try {
       const cur = await api("/api/pages").then(r=>r.json()).catch(()=>({}));
-      const r = await api("/api/pages", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({...cur,[page]:data}) });
+      // JSON 数组字段解析回数组
+      const payload = { ...data };
+      for (const k of ["honors", "brand"]) {
+        if (payload[k] && typeof payload[k] === "string") {
+          try { payload[k] = JSON.parse(payload[k]); } catch { /* 保持原样 */ }
+        }
+      }
+      const r = await api("/api/pages", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({...cur,[page]:payload}) });
       const d = await r.json().catch(()=>({}));
       if (!r.ok || d.error) { setMsg("❌ "+(d.error||"保存失败")); return; }
       setMsg("✅ 已保存"); setTimeout(()=>setMsg(""),3000);
@@ -744,7 +759,7 @@ function PageForm({ page }: { page: "about" | "contact" }) {
         <div key={k} style={{ marginBottom:16 }}>
           <label style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.3)", fontSize:10, display:"block", marginBottom:6, textTransform:"uppercase" }}>{lab}</label>
           {type==="textarea" ? (
-            <textarea value={data[k]||""} onChange={e=>setData({...data,[k]:e.target.value})} rows={3}
+            <textarea value={data[k]||""} onChange={e=>setData({...data,[k]:e.target.value})} rows={k==="honors"?10:3}
               style={{ width:"100%", background:"transparent", border:"1px solid rgba(255,255,255,0.1)", padding:"8px 12px", color:"rgba(255,255,255,0.8)", fontSize:13, outline:"none", fontFamily:"var(--font-body)", resize:"vertical", boxSizing:"border-box" }} />
           ) : (
             <input value={data[k]||""} onChange={e=>setData({...data,[k]:e.target.value})}
@@ -863,7 +878,7 @@ function JoinForm() {
       <h2 style={{ fontFamily: "var(--font-display)", color: "#fff", fontSize: 20, margin: "0 0 24px" }}>加入我们页面</h2>
 
       <div style={{ marginBottom: 24 }}>
-        <label style={{ fontFamily: "var(--font-body)", color: "rgba(255,255,255,0.3)", fontSize: 10, display: "block", marginBottom: 6, textTransform: "uppercase" }}>投递邮箱</label>
+        <label style={{ fontFamily: "var(--font-body)", color: "rgba(255,255,255,0.3)", fontSize: 10, display: "block", marginBottom: 6, textTransform: "uppercase" }}>投递邮箱 / Contact Email</label>
         <input value={email} onChange={e => setEmail(e.target.value)}
           style={{ width: "100%", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", padding: "8px 12px", color: "rgba(255,255,255,0.8)", fontSize: 13, outline: "none", fontFamily: "var(--font-body)", boxSizing: "border-box" }} />
       </div>

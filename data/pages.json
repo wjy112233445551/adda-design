@@ -1,17 +1,59 @@
 {
   "about": {
-    "zh": "邸岸空间建筑设计事务所由设计师Akon和Darren创立，致力于打造富有情感和深度的建筑体验，为人们的生活增添色彩。A：AKON D：DARREN D：邸|高级居所|人与空间共同呼吸 A：岸|家的港湾|五感的自由与松弛",
-    "en": "Dichang Space Architecture Design Firm was founded by designers Akon and Darren, dedicated to creating buildings that are emotionally rich and profound, adding color to people's lives. A: AKON D: DARREN D: Residence | High-end Mansion | Coexistence of People and Space A: Shore | The Harbor of Home | Freedom and Relaxation of the Five Senses",
+    "zh": "邸岸空间建筑设计事务所由设计师Akon和Darren创立，致力于打造富有情感和深度的建筑体验，为人们的生活增添色彩。以创造力和平衡为核心，ADDA专注于将冒险精神与建筑传统相融合，致力于构建富有新鲜感的空间。我们强调团队的经验、天赋与信心，以创造引人入胜的环境为目标，提供超越视觉的全方位体验，赋予空间独特的生命力。",
+    "en": "ADDA architecture is a Nanjing-based design studio specializing in high-end residential, commercial, and cultural projects. We believe space is the container of life — every project is a narrative co-authored with our clients.",
+    "brand": [
+      { "label": "A", "founder": "AKON" },
+      { "label": "D", "founder": "DARREN" },
+      { "label": "D", "meaning": "邸  ｜  高级居所  ｜  人与空间共同呼吸" },
+      { "label": "A", "meaning": "岸  ｜  家的港湾  ｜  五感的自由与松弛" }
+    ],
     "location": "南京 · 中国",
     "founded": "2017",
     "projects": "100+",
-    "clients": "保利 · 滨江 · 招商· 金基· 仁恒"
+    "honors": [
+      "2023 40-40 中国（南京）设计杰出青年",
+      "2023 美国 MUSE 设计银奖",
+      "2023 芒果设计全国住宅创意奖",
+      "2023 第11届 HI-D 设计大赛全国优秀奖",
+      "2023 小红书筑家有方奖",
+      "2023 NCA 新商业空间设计师 TOP100",
+      "2023 红棉设计室内大奖",
+      "2024 40-40 中国（南京）设计杰出青年",
+      "2024 美国 MUSE 设计金奖",
+      "2024 第12届 HI-D 设计大赛全国金奖",
+      "2024 设计星全国 36 强",
+      "2024 ICS 色彩空间设计奖",
+      "2024 亚洲青年设计之光中国内地 TOP100",
+      "2024 星园奖-年度优秀造园师",
+      "2024 IS 智能空间设计奖",
+      "2024 入选中国室内设计年鉴"
+    ]
   },
   "contact": {
     "email": "630235075@qq.com",
     "wechat": "ADDAdesign"
   },
-  "founders": [],
+  "founders": [
+    {
+      "name": "周大仁",
+      "nameEn": "Darren",
+      "role": "创始人 / 设计总监",
+      "roleEn": "Founder & Design Director",
+      "image": "",
+      "bio": "拥有十余年高端住宅与商业空间设计经验。以极简主义为核心设计语言，善于在克制与留白中营造富有张力的空间叙事，让形式追随功能，让空间回归本质。",
+      "bioEn": "With over a decade of experience in high-end residential and commercial spaces. His work is defined by a minimalist design language — crafting spatial narratives rich in tension through restraint and negative space, where form follows function and space returns to its essence."
+    },
+    {
+      "name": "唐铖",
+      "nameEn": "Akon",
+      "role": "创始人 / 创意总监",
+      "roleEn": "Founder & Creative Director",
+      "image": "",
+      "bio": "深耕空间设计领域多年，以折衷主义为设计哲学，擅长从建筑、艺术与生活中提取灵感，将跨学科思维融入设计实践。不拘泥于单一风格，致力于为每一个项目找到独特而恰如其分的表达语言。",
+      "bioEn": "A seasoned spatial designer whose design philosophy is rooted in eclecticism. He draws inspiration from architecture, art, and everyday life, integrating cross-disciplinary thinking into design practice. Unbound by any single style, he is dedicated to finding a unique and fitting expressive language for every project."
+    }
+  ],
   "join": {
     "positions": [],
     "email": "630235075@qq.com"

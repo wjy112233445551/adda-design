@@ -23,13 +23,18 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col gap-2 text-right">
-            <a
-              href="mailto:hello@adda.studio"
-              className="text-white/60 hover:text-white transition-colors text-[10px] tracking-[.15em]"
+            <p
+              className="text-white/60 text-[10px] tracking-[.15em]"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              hello@adda.studio
-            </a>
+              邮箱 / Email:{" "}
+              <a
+                href="mailto:hello@adda.studio"
+                className="text-white/50 hover:text-white transition-colors"
+              >
+                hello@adda.studio
+              </a>
+            </p>
             <a
               href="https://instagram.com"
               target="_blank"
