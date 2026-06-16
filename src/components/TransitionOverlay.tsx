@@ -123,11 +123,11 @@ export function TransitionOverlay() {
       </svg>
       <p
         style={{
-          fontFamily: "var(--font-display)",
+          fontFamily: "var(--font-body)",
           fontSize: "clamp(1rem, 2vw, 1.4rem)",
           color: "#e5e5e5",
-          letterSpacing: "0.2em",
-          fontWeight: 500,
+          letterSpacing: "0.25em",
+          fontWeight: 300,
         }}
       >
         ADDA
