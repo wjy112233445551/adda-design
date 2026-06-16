@@ -43,7 +43,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = new URL(req.url, "http://localhost");
   const token = searchParams.get("token") || "";
   const body = await req.json();
   const list = readProjects();
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = new URL(req.url, "http://localhost");
   const token = searchParams.get("token") || "";
   const body = await req.json();
   const list = readProjects();
@@ -78,7 +78,7 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = new URL(req.url, "http://localhost");
   const token = searchParams.get("token") || "";
   let body: any;
   try { body = await req.json(); } catch { body = {}; }
