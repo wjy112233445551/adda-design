@@ -59,11 +59,31 @@ a {
 /* ── Hero 响应式 ── */
 .hero-overlay-top { display: none; }
 
-@media (max-width: 768px) {
-  .hero-section {
-    height: 55svh !important;
-    min-height: -webkit-fill-available;
+/* ── 桌面端（宽高比 ≥ 1，横屏/宽屏）：横图 cover 填充全屏 ── */
+@media (min-aspect-ratio: 1/1) {
+  .hero-image {
+    object-fit: cover !important;
+    object-position: center !important;
   }
+}
+
+/* ── 手机端（宽高比 < 1，竖屏）：竖图 contain 完整显示 ── */
+@media (max-aspect-ratio: 999/1000) {
+  .hero-section {
+    height: 100svh !important;
+    min-height: 100svh;
+  }
+  .hero-image {
+    object-fit: contain !important;
+    object-position: center !important;
+  }
+  .hero-overlay-top {
+    display: block;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 20%) !important;
+  }
+}
+
+@media (max-width: 768px) {
   .hero-bg-desktop { display: none !important; }
   .hero-bg-mobile { display: block !important; }
   .hero-copy {
@@ -80,10 +100,6 @@ a {
   .hero-text {
     font-size: clamp(11px, 3vw, 13px) !important;
     line-height: 1.85 !important;
-  }
-  /* 顶部渐变收窄，覆盖更少 */
-  .hero-overlay-top {
-    background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 20%) !important;
   }
 }
 
