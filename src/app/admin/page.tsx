@@ -18,7 +18,12 @@ function api(path: string, init?: RequestInit): Promise<Response> {
   const url = (!_isLocal && !path.startsWith("/api/github"))
     ? path + sep + "token=" + encodeURIComponent(getToken())
     : path;
-  return fetch(url, { ...init, cache: init?.cache || "no-store" });
+  // 确保 mutation 请求有 Content-Type，避免 req.json() 挂起
+  const headers = new Headers(init?.headers);
+  if ((init?.method === "POST" || init?.method === "PUT") && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  return fetch(url, { ...init, headers, cache: init?.cache || "no-store" });
 }
 
 // ====== 防止原生 select 下拉导致弹窗误关闭 ======

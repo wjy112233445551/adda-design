@@ -29,8 +29,14 @@ export async function GET() {
 export async function POST(req: Request) {
   const { searchParams } = new URL(req.url, "http://localhost");
   const token = searchParams.get("token") || "";
-  const body = await req.json().catch(() => ({}));
   const cwd = process.cwd();
+
+  // 只在有 body 内容时才解析
+  let body: any = {};
+  const cl = parseInt(req.headers.get("content-length") || "0", 10);
+  if (cl > 0) {
+    try { body = await req.json(); } catch {}
+  }
 
   // ── 保存配置 ──
   if (body.gitRemote !== undefined || body.method !== undefined) {
