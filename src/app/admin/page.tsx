@@ -728,9 +728,13 @@ function PageForm({ page }: { page: "about" | "contact" }) {
     : [["email","Email","text"],["wechat","WeChat","text"]];
 
   const save = async () => {
-    const cur = await api("/api/pages").then(r=>r.json()).catch(()=>({}));
-    await api("/api/pages", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({...cur,[page]:data}) });
-    setMsg("✅ 已保存"); setTimeout(()=>setMsg(""),3000);
+    try {
+      const cur = await api("/api/pages").then(r=>r.json()).catch(()=>({}));
+      const r = await api("/api/pages", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({...cur,[page]:data}) });
+      const d = await r.json().catch(()=>({}));
+      if (!r.ok || d.error) { setMsg("❌ "+(d.error||"保存失败")); return; }
+      setMsg("✅ 已保存"); setTimeout(()=>setMsg(""),3000);
+    } catch(e:any) { setMsg("❌ "+(e.message||"网络错误")); }
   };
 
   return (
@@ -767,18 +771,31 @@ function FoundersForm() {
     }).catch(()=>{});
   }, []);
 
+  const addFounder = () => { setFounders([...founders, { name:"", nameEn:"", role:"", roleEn:"", image:"", bio:"", bioEn:"" }]); };
+  const removeFounder = (i: number) => { const n=[...founders]; n.splice(i,1); setFounders(n); };
+
   const save = async () => {
-    const cur = await api("/api/pages").then(r=>r.json()).catch(()=>({}));
-    await api("/api/pages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...cur,founders})});
-    setMsg("✅ 已保存"); setTimeout(()=>setMsg(""),3000);
+    try {
+      const cur = await api("/api/pages").then(r=>r.json()).catch(()=>({}));
+      const r = await api("/api/pages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...cur,founders})});
+      const d = await r.json().catch(()=>({}));
+      if (!r.ok || d.error) { setMsg("❌ "+(d.error||"保存失败")); return; }
+      setMsg("✅ 已保存"); setTimeout(()=>setMsg(""),3000);
+    } catch(e:any) { setMsg("❌ "+(e.message||"网络错误")); }
   };
 
   return (
     <div style={{ maxWidth:600 }}>
-      <h2 style={{ fontFamily:"var(--font-display)", color:"#fff", fontSize:20, margin:"0 0 24px" }}>创始人页面</h2>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+        <h2 style={{ fontFamily:"var(--font-display)", color:"#fff", fontSize:20, margin:0 }}>创始人页面</h2>
+        <button onClick={addFounder} style={{ fontFamily:"var(--font-body)", background:"rgba(255,255,255,0.1)", border:"none", color:"#fff", padding:"6px 12px", fontSize:11, cursor:"pointer" }}>+ 添加</button>
+      </div>
       {founders.map((f,i) => (
         <div key={i} style={{ marginBottom:24, padding:20, border:"1px solid rgba(255,255,255,0.06)" }}>
-          <h3 style={{ fontFamily:"var(--font-display)", color:"rgba(255,255,255,0.5)", fontSize:14, margin:"0 0 16px" }}>创始人 {i+1}</h3>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+            <h3 style={{ fontFamily:"var(--font-display)", color:"rgba(255,255,255,0.5)", fontSize:14, margin:0 }}>创始人 {i+1}</h3>
+            <button onClick={() => removeFounder(i)} style={{ fontFamily:"var(--font-body)", background:"none", border:"none", color:"rgba(255,80,80,0.4)", fontSize:11, cursor:"pointer" }}>删除</button>
+          </div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
             {["name","nameEn","role","roleEn","image"].map(k => (
               <div key={k} style={k==="image"?{gridColumn:"1/-1"}:{}}>
@@ -821,13 +838,17 @@ function JoinForm() {
   }, []);
 
   const save = async () => {
-    const cur = await api("/api/pages").then(r=>r.json()).catch(()=>({}));
-    await api("/api/pages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...cur, join: { positions, email } })
-    });
-    setMsg("✅ 已保存"); setTimeout(() => setMsg(""), 3000);
+    try {
+      const cur = await api("/api/pages").then(r=>r.json()).catch(()=>({}));
+      const r = await api("/api/pages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...cur, join: { positions, email } })
+      });
+      const d = await r.json().catch(()=>({}));
+      if (!r.ok || d.error) { setMsg("❌ "+(d.error||"保存失败")); return; }
+      setMsg("✅ 已保存"); setTimeout(() => setMsg(""), 3000);
+    } catch(e:any) { setMsg("❌ "+(e.message||"网络错误")); }
   };
 
   const addPosition = () => {
