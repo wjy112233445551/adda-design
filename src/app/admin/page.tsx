@@ -3,6 +3,24 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 
+// ====== Cloud admin: GitHub API helper ======
+let _isLocal = false;
+if (typeof window !== "undefined") _isLocal = window.location.hostname === "localhost";
+
+function getToken(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("adda_github_token") || "";
+}
+
+/** 云端模式自动在 mutation API 后附加 token */
+function api(path: string, init?: RequestInit): Promise<Response> {
+  const sep = path.includes("?") ? "&" : "?";
+  const url = (!_isLocal && !path.startsWith("/api/github"))
+    ? path + sep + "token=" + encodeURIComponent(getToken())
+    : path;
+  return fetch(url, { ...init, cache: init?.cache || "no-store" });
+}
+
 // ====== 防止原生 select 下拉导致弹窗误关闭 ======
 function useModalBackdrop() {
   const interactingRef = useRef(false);
@@ -122,7 +140,7 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
 
   const { onSelectMouseDown, onBackdropClick } = useModalBackdrop();
   const load = async () => {
-    const [p, f] = await Promise.all([fetch("/api/projects", { cache: "no-store" }), fetch("/api/browse", { cache: "no-store" })]);
+    const [p, f] = await Promise.all([api("/api/projects", { cache: "no-store" }), api("/api/browse", { cache: "no-store" })]);
     setProjects(await p.json()); setFolders(await f.json());
   };
   useEffect(() => { load(); }, []);
@@ -132,10 +150,10 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
   const save = async () => {
     if (!form.slug) return;
     const isNew = !projects.find(p=>p.slug===form.slug);
-    await fetch("/api/projects", { method: isNew?"POST":"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(form) });
+    await api("/api/projects", { method: isNew?"POST":"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(form) });
     setShowForm(false); load();
   };
-  const del = async (s: string) => { if(confirm("确认删除？")) { await fetch("/api/projects",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({slug:s})}); load(); }};
+  const del = async (s: string) => { if(confirm("确认删除？")) { await api("/api/projects",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({slug:s})}); load(); }};
 
   return (
     <div>
@@ -185,7 +203,7 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
               <div style={{ gridColumn:"1/-1" }}>
                 <label style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.3)", fontSize:10, display:"block", marginBottom:4, textTransform:"uppercase" }}>图片文件夹</label>
                 <div style={{ display:"flex", gap:8 }}>
-                  <select value={form.folder||""} onMouseDown={onSelectMouseDown} onChange={async e => { setForm({...form,folder:e.target.value,cover:""}); const r=await fetch(`/api/browse?folder=${encodeURIComponent(e.target.value)}`); setFolderImgs(await r.json()); }}
+                  <select value={form.folder||""} onMouseDown={onSelectMouseDown} onChange={async e => { setForm({...form,folder:e.target.value,cover:""}); const r=await api(`/api/browse?folder=${encodeURIComponent(e.target.value)}`); setFolderImgs(await r.json()); }}
                     style={{ flex:1, background:"transparent", border:"1px solid rgba(255,255,255,0.1)", padding:"8px 12px", color:"rgba(255,255,255,0.8)", fontSize:13, outline:"none", fontFamily:"var(--font-body)" }}>
                     <option value="">已导入的项目...</option>
                     {folders.map(f => <option key={f} value={f}>{f}</option>)}
@@ -266,8 +284,8 @@ function LayoutEditor({ project, onBack }: { project: Project; onBack: () => voi
 
   useEffect(() => {
     if (project.folder) {
-      fetch(`/api/browse?folder=${encodeURIComponent(project.folder)}`, { cache: "no-store" })
-        .then(r => r.json()).then(d => {
+      api(`/api/browse?folder=${encodeURIComponent(project.folder)}`, { cache: "no-store" })
+        .then((r: Response) => r.json()).then(d => {
           const imgs = (Array.isArray(d) ? d : []) as string[];
           setAllImgs(imgs);
           if (project.galleryOrder && project.galleryOrder.length > 0) {
@@ -514,7 +532,7 @@ function RenderingsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
 
   const { onSelectMouseDown: rmOnSelect, onBackdropClick: rmBackdrop } = useModalBackdrop();
   const load = async () => {
-    const [p, f] = await Promise.all([fetch("/api/renderings", { cache: "no-store" }), fetch("/api/browse", { cache: "no-store" })]);
+    const [p, f] = await Promise.all([api("/api/renderings", { cache: "no-store" }), api("/api/browse", { cache: "no-store" })]);
     setProjects(await p.json());
     setFolders(await f.json());
   };
@@ -524,13 +542,13 @@ function RenderingsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
     setEditing(p);
     setForm({...p});
     if (p.folder) {
-      const r = await fetch(`/api/browse?folder=${encodeURIComponent(p.folder)}`, { cache: "no-store" });
+      const r = await api(`/api/browse?folder=${encodeURIComponent(p.folder)}`, { cache: "no-store" });
       setFolderImgs(await r.json());
     }
   };
 
   const changeFolder = async (newFolder: string) => {
-    const r = await fetch(`/api/browse?folder=${encodeURIComponent(newFolder)}`, { cache: "no-store" });
+    const r = await api(`/api/browse?folder=${encodeURIComponent(newFolder)}`, { cache: "no-store" });
     const imgs = await r.json();
     setFolderImgs(imgs);
     setForm({...form, folder: newFolder, cover: imgs.length > 0 ? imgs[0] : "", galleryOrder: []});
@@ -547,7 +565,7 @@ function RenderingsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
   const save = async () => {
     if (!form.slug) return;
     const isNew = !projects.find(p => p.slug === form.slug);
-    const res = await fetch("/api/renderings", {
+    const res = await api("/api/renderings", {
       method: isNew ? "POST" : "PUT",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify(form),
@@ -558,7 +576,7 @@ function RenderingsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
 
   const del = async (slug: string) => {
     if (!confirm("确认删除？此操作不可撤销。")) return;
-    const res = await fetch("/api/renderings", { method: "DELETE", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ slug }) });
+    const res = await api("/api/renderings", { method: "DELETE", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ slug }) });
     if (res.ok) { setEditing(null); load(); }
     else setMsg("删除失败");
   };
@@ -679,7 +697,7 @@ function PageForm({ page }: { page: "about" | "contact" }) {
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    fetch("/api/pages").then(r=>r.json()).then(d => {
+    api("/api/pages").then(r=>r.json()).then(d => {
       if (d[page]) setData(d[page]);
     }).catch(()=>{});
   }, [page]);
@@ -689,8 +707,8 @@ function PageForm({ page }: { page: "about" | "contact" }) {
     : [["email","Email","text"],["wechat","WeChat","text"]];
 
   const save = async () => {
-    const cur = await fetch("/api/pages").then(r=>r.json()).catch(()=>({}));
-    await fetch("/api/pages", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({...cur,[page]:data}) });
+    const cur = await api("/api/pages").then(r=>r.json()).catch(()=>({}));
+    await api("/api/pages", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({...cur,[page]:data}) });
     setMsg("✅ 已保存"); setTimeout(()=>setMsg(""),3000);
   };
 
@@ -723,14 +741,14 @@ function FoundersForm() {
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    fetch("/api/pages").then(r=>r.json()).then(d => {
+    api("/api/pages").then(r=>r.json()).then(d => {
       if(d.founders) setFounders(d.founders);
     }).catch(()=>{});
   }, []);
 
   const save = async () => {
-    const cur = await fetch("/api/pages").then(r=>r.json()).catch(()=>({}));
-    await fetch("/api/pages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...cur,founders})});
+    const cur = await api("/api/pages").then(r=>r.json()).catch(()=>({}));
+    await api("/api/pages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...cur,founders})});
     setMsg("✅ 已保存"); setTimeout(()=>setMsg(""),3000);
   };
 
@@ -773,7 +791,7 @@ function JoinForm() {
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    fetch("/api/pages").then(r=>r.json()).then(d => {
+    api("/api/pages").then(r=>r.json()).then(d => {
       if (d.join) {
         if (d.join.positions) setPositions(d.join.positions);
         if (d.join.email) setEmail(d.join.email);
@@ -782,8 +800,8 @@ function JoinForm() {
   }, []);
 
   const save = async () => {
-    const cur = await fetch("/api/pages").then(r=>r.json()).catch(()=>({}));
-    await fetch("/api/pages", {
+    const cur = await api("/api/pages").then(r=>r.json()).catch(()=>({}));
+    await api("/api/pages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...cur, join: { positions, email } })
@@ -929,7 +947,7 @@ function FileBrowser({ children, onImport }: { children: React.ReactNode; onImpo
   // ── localhost: filesystem browse ──
   const browse = async (p: string) => {
     try {
-      const r = await fetch(`/api/browse?action=browse&path=${encodeURIComponent(p)}`);
+      const r = await api(`/api/browse?action=browse&path=${encodeURIComponent(p)}`);
       const d = await r.json();
       setPath(d.path || p);
       setDirs(d.dirs?.map((x:any) => x.name) || []);
@@ -941,7 +959,7 @@ function FileBrowser({ children, onImport }: { children: React.ReactNode; onImpo
   const importF = async (p: string) => {
     setMsg("导入中...");
     const name = p.split("/").pop() || "project";
-    const r = await fetch(`/api/browse?action=import&path=${encodeURIComponent(p)}&name=${encodeURIComponent(name)}`);
+    const r = await api(`/api/browse?action=import&path=${encodeURIComponent(p)}&name=${encodeURIComponent(name)}`);
     const d = await r.json();
     if (d.success) { onImport(d.folder); setOpen(false); setMsg(""); }
     else setMsg("导入失败");
@@ -1086,7 +1104,7 @@ function DeployBtn() {
   const deploy = async () => {
     setLoading(true); setMsg("部署中...");
     try {
-      const r = await fetch("/api/deploy",{method:"POST"});
+      const r = await api("/api/deploy",{method:"POST"});
       const d = await r.json();
       setMsg(d.success ? `✅ ${d.message}` : `❌ ${d.message}`);
     } catch { setMsg("❌ 失败"); }

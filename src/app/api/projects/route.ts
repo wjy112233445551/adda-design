@@ -4,24 +4,36 @@ import fs from "fs";
 import path from "path";
 
 const DATA_PATH = path.join(process.cwd(), "data", "projects.json");
+const IS_VERCEL = !!process.env.VERCEL;
 
 function readProjects() {
-  // 优先读文件（本地后台可写），失败则用内嵌数据（Vercel 可靠）
-  try {
-    return JSON.parse(fs.readFileSync(DATA_PATH, "utf-8"));
-  } catch {
-    return projects;
-  }
+  try { return JSON.parse(fs.readFileSync(DATA_PATH, "utf-8")); }
+  catch { return projects; }
+}
+
+async function saveViaGitHub(data: unknown, token: string, message: string) {
+  const GITHUB = "https://api.github.com/repos/wjy112233445551/adda-design/contents/data/projects.json";
+  // 先读当前 sha
+  const getRes = await fetch(GITHUB, {
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github.v3+json" },
+    cache: "no-store",
+  });
+  const current = await getRes.json();
+  const putRes = await fetch(GITHUB, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message,
+      content: Buffer.from(JSON.stringify(data, null, 2)).toString("base64"),
+      sha: current.sha,
+    }),
+  });
+  if (!putRes.ok) throw new Error((await putRes.json()).message);
 }
 
 function writeProjects(data: unknown) {
-  try {
-    const dir = path.dirname(DATA_PATH);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
-  } catch {
-    // Vercel 上只读，静默忽略
-  }
+  try { fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2)); }
+  catch { /* Vercel 只读，忽略 */ }
 }
 
 export async function GET() {
@@ -31,6 +43,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get("token") || "";
   const body = await req.json();
   const list = readProjects();
   const newProject = {
@@ -40,23 +54,41 @@ export async function POST(req: Request) {
   };
   list.push(newProject);
   writeProjects(list);
+  if (IS_VERCEL && token) {
+    try { await saveViaGitHub(list, token, `admin: add project ${newProject.title || newProject.slug}`); }
+    catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  }
   return NextResponse.json(newProject, { status: 201 });
 }
 
 export async function PUT(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get("token") || "";
   const body = await req.json();
   const list = readProjects();
   const idx = list.findIndex((p: { slug: string }) => p.slug === body.slug);
   if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
   list[idx] = { ...list[idx], ...body };
   writeProjects(list);
+  if (IS_VERCEL && token) {
+    try { await saveViaGitHub(list, token, `admin: update project ${body.title || body.slug}`); }
+    catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  }
   return NextResponse.json(list[idx]);
 }
 
 export async function DELETE(req: Request) {
-  const { slug } = await req.json();
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get("token") || "";
+  let body: any;
+  try { body = await req.json(); } catch { body = {}; }
   let list = readProjects();
+  const slug = body.slug;
   list = list.filter((p: { slug: string }) => p.slug !== slug);
   writeProjects(list);
+  if (IS_VERCEL && token) {
+    try { await saveViaGitHub(list, token, `admin: delete project ${slug}`); }
+    catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  }
   return NextResponse.json({ ok: true });
 }
