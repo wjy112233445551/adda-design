@@ -53,6 +53,24 @@ export async function POST(req: Request) {
   const { searchParams } = new URL(req.url, "http://localhost");
   const token = searchParams.get("token") || "";
   const body = await req.json();
+
+  // —— reorder action ——
+  if (body.action === "reorder" && Array.isArray(body.slugs)) {
+    const list = readProjects();
+    const map = new Map(list.map((p: any) => [p.slug, p]));
+    const reordered = body.slugs.map((s: string) => map.get(s)).filter(Boolean);
+    // 保留不在 slugs 中的项目（防御性）
+    for (const p of list) { if (!body.slugs.includes(p.slug)) reordered.push(p); }
+    writeProjects(reordered);
+    if (IS_VERCEL) {
+      if (!token) return NextResponse.json({ error: "缺少 GitHub Token" }, { status: 400 });
+      try { await saveViaGitHub(reordered, token, "admin: reorder projects"); }
+      catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+    }
+    return NextResponse.json({ ok: true, count: reordered.length });
+  }
+
+  // —— create action ——
   const list = readProjects();
   const newProject = {
     ...body,

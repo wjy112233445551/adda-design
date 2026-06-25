@@ -50,13 +50,8 @@ export default function About() {
     gsap.fromTo(containerRef.current, { opacity: 0 }, { opacity: 1, duration: 0.8, delay: 0.5, ease: "power2.out" });
   }, []);
 
-  // 按年份分组荣誉奖项
-  const honorsByYear = (data.honors || []).reduce((acc: Record<string, string[]>, h: string) => {
-    const year = h.startsWith("2023") ? "2023" : h.startsWith("2024") ? "2024" : "Other";
-    if (!acc[year]) acc[year] = [];
-    acc[year].push(h.replace(/^202[34]\s*/, ""));
-    return acc;
-  }, {});
+  // 去掉年份前缀，只保留奖项名称
+  const honors = (data.honors || []).map((h: string) => h.replace(/^20\d{2}\s*/, ""));
 
   const statStyle: React.CSSProperties = {
     fontFamily: "var(--font-body)",
@@ -142,26 +137,17 @@ export default function About() {
         </div>
       </div>
 
-      {/* ── 荣誉奖项 — 按年份分组 ── */}
-      {Object.keys(honorsByYear).length > 0 && (
+      {/* ── 荣誉奖项 ── */}
+      {honors.length > 0 && (
         <div style={{ marginBottom: "clamp(64px, 8vw, 120px)" }}>
           <p className="text-white/15 text-[10px] tracking-[.3em] uppercase mb-10" style={{ fontFamily: "var(--font-body)" }}>
             Honors &amp; Awards
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20 gap-y-14">
-            {Object.entries(honorsByYear).map(([year, items]) => (
-              <div key={year}>
-                <p className="text-white/12 mb-6" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(32px, 4vw, 48px)", letterSpacing: "-0.02em" }}>
-                  {year}
-                </p>
-                <div className="space-y-2.5">
-                  {items.map((h: string, i: number) => (
-                    <p key={i} className="text-white/35" style={{ fontFamily: "var(--font-body)", fontSize: "clamp(12px, 0.85vw, 13px)", lineHeight: 1.6 }}>
-                      {h}
-                    </p>
-                  ))}
-                </div>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20 gap-y-2.5">
+            {honors.map((h: string, i: number) => (
+              <p key={i} className="text-white/35" style={{ fontFamily: "var(--font-body)", fontSize: "clamp(12px, 0.85vw, 13px)", lineHeight: 1.8 }}>
+                {h}
+              </p>
             ))}
           </div>
         </div>

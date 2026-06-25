@@ -142,6 +142,8 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
   const [form, setForm] = useState<Partial<Project>>({});
   const [folders, setFolders] = useState<string[]>([]);
   const [folderImgs, setFolderImgs] = useState<string[]>([]);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dropIdx, setDropIdx] = useState<number | null>(null);
 
   const { onSelectMouseDown, onBackdropClick } = useModalBackdrop();
   const load = async () => {
@@ -175,6 +177,27 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
     } catch(e:any){setMsg("❌ "+(e.message||"网络错误"));}
   };
 
+  // —— 拖拽排序 ——
+  const handleDragStart = (idx: number) => { setDragIdx(idx); };
+  const handleDragOver = (e: React.DragEvent, idx: number) => { e.preventDefault(); setDropIdx(idx); };
+  const handleDragEnd = () => { setDragIdx(null); setDropIdx(null); };
+  const handleDrop = async (idx: number) => {
+    if (dragIdx === null || dragIdx === idx) { setDragIdx(null); setDropIdx(null); return; }
+    const next = [...projects];
+    const [moved] = next.splice(dragIdx, 1);
+    next.splice(idx, 0, moved);
+    setProjects(next);
+    setDragIdx(null); setDropIdx(null);
+    // 保存新顺序
+    setMsg("保存排序...");
+    try {
+      const r = await api("/api/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "reorder", slugs: next.map(p => p.slug) }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || d.error) { setMsg("❌ " + (d.error || "排序保存失败")); load(); return; }
+      setMsg("✅ 排序已保存"); setTimeout(() => setMsg(""), 2000);
+    } catch (e: any) { setMsg("❌ " + (e.message || "网络错误")); load(); }
+  };
+
   return (
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:32 }}>
@@ -186,10 +209,23 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
       </div>
 
       {/* Project List */}
-      {projects.map(p => (
-        <div key={p.slug} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 16px", border:"1px solid rgba(255,255,255,0.04)", marginBottom:4, cursor:"pointer" }}
-          onClick={() => openEdit(p)}>
-          <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+      {projects.map((p, idx) => (
+        <div key={p.slug}
+          draggable
+          onDragStart={() => handleDragStart(idx)}
+          onDragOver={(e) => handleDragOver(e, idx)}
+          onDrop={() => handleDrop(idx)}
+          onDragEnd={handleDragEnd}
+          style={{
+            display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 16px",
+            border:"1px solid rgba(255,255,255,0.04)", marginBottom:4, cursor:"grab",
+            opacity: dragIdx === idx ? 0.3 : 1,
+            borderTop: dropIdx === idx ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(255,255,255,0.04)",
+            transition: "opacity 0.15s, border-top 0.15s",
+            background: dragIdx === idx ? "rgba(255,255,255,0.02)" : "transparent",
+          }}>
+          <div style={{ display:"flex", alignItems:"center", gap:16 }}
+            onClick={() => openEdit(p)}>
             {p.cover && <img src={p.cover} style={{ width:56, height:36, objectFit:"cover" }} alt="" />}
             <div>
               <span style={{ fontFamily:"var(--font-display)", color:"#fff", fontSize:14 }}>{p.titleEn}</span>

@@ -44,14 +44,30 @@ export function Navigation() {
 
   return (
     <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-black opacity-0">
-      <div className="max-w-[1400px] mx-auto flex justify-between items-center"
+      <div className="max-w-[1400px] mx-auto flex items-center"
         style={{ padding: "clamp(14px, 2vw, 28px) clamp(20px, 3vw, 36px)" }}>
         <a href="/" onClick={(e) => { e.preventDefault(); document.getElementById("modal-overlay") ? window.dispatchEvent(new CustomEvent("close-modal")) : navigateWithTransition("/"); }}
-          className="cursor-pointer">
+          className="cursor-pointer flex-shrink-0">
           <img src="/logo.webp" alt="ADDA" className="w-auto" style={{ height: "clamp(24px, 3vw, 42px)" }} />
         </a>
 
-        <div className="flex items-center" style={{ gap: "clamp(12px, 2.5vw, 36px)" }}>
+        {/* 品牌标语 — 导航栏居中 */}
+        <div className="flex-1 flex justify-center" style={{ margin: "0 clamp(12px, 2vw, 24px)" }}>
+          <span style={{
+            fontFamily: "var(--font-body)",
+            fontSize: "clamp(9px, 0.85vw, 11px)",
+            letterSpacing: "0.2em",
+            color: "rgba(255,255,255,0.18)",
+            whiteSpace: "nowrap",
+          }}>
+            私邸纳艺<span style={{ margin: "0 0.6em", color: "rgba(255,255,255,0.06)" }}>·</span>
+            隐贵之境<span style={{ margin: "0 0.6em", color: "rgba(255,255,255,0.06)" }}>·</span>
+            江上入园<span style={{ margin: "0 0.6em", color: "rgba(255,255,255,0.06)" }}>·</span>
+            心归于岸
+          </span>
+        </div>
+
+        <div className="flex items-center flex-shrink-0" style={{ gap: "clamp(12px, 2.5vw, 36px)" }}>
           {links.map((link) => {
             const isActive = pathname === link.href;
             return link.hasDropdown ? (

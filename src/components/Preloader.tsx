@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import gsap from "gsap";
 
 /**
@@ -32,6 +33,7 @@ export function Preloader() {
   const started = useRef(false);
   const exitTimeline = useRef<gsap.core.Timeline | null>(null);
   const doExitRef = useRef<() => void>(() => {});
+  const router = useRouter();
 
   useEffect(() => {
     if (started.current) return;
@@ -46,6 +48,10 @@ export function Preloader() {
 
     const doExit = () => {
       if (exitTimeline.current) return;
+      // 如果不是首页，先跳转到首页
+      if (window.location.pathname !== "/") {
+        router.replace("/?category=");
+      }
       window.dispatchEvent(new CustomEvent("preloader-exit"));
       exitTimeline.current = gsap.timeline({
         onComplete: () => {
