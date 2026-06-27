@@ -50,7 +50,7 @@ export default function FounderPage() {
         {/* 左侧：竖图完整展示 */}
         <div className="w-full md:w-[42%] lg:w-[38%] shrink-0">
           <img
-            src="/hezhao.jpg"
+            src="/hezhao.png"
             alt="ADDA Founders"
             className="w-full h-auto object-contain"
             style={{ maxHeight: "80vh" }}

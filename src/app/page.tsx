@@ -54,8 +54,8 @@ export default function Home() {
       // 锁定滚动
       document.body.style.overflow = "hidden";
 
-      if (!heroCharsRef.current) return;
-      const chars = heroCharsRef.current.querySelectorAll<HTMLSpanElement>(".hero-char");
+      if (!heroIntroRef.current) return;
+      const chars = heroIntroRef.current.querySelectorAll<HTMLSpanElement>(".hero-char");
 
       gsap.fromTo(
         chars,
@@ -210,10 +210,43 @@ export default function Home() {
             position: "absolute",
             left: "clamp(20px, 5vw, 80px)",
             right: "clamp(20px, 5vw, 80px)",
-            bottom: "clamp(32px, 7vw, 100px)",
+            bottom: "clamp(16px, 4vw, 64px)",
             maxWidth: "clamp(280px, 38vw, 540px)",
           }}
         >
+          {/* 品牌标语 — Hero 大图上方 */}
+          <div className="hero-tagline"
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: "clamp(10px, 1.05vw, 15px)",
+              fontWeight: 300,
+              letterSpacing: "0.28em",
+              color: "rgba(255,255,255,0.42)",
+              marginBottom: "clamp(10px, 1.8vw, 18px)",
+              lineHeight: 1.8,
+            }}
+          >
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>私</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>邸</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>纳</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>艺</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0, margin: "0 0.5em", color: "rgba(255,255,255,0.10)" }}>·</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>隐</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>贵</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>之</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>境</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0, margin: "0 0.5em", color: "rgba(255,255,255,0.10)" }}>·</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>江</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>上</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>入</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>园</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0, margin: "0 0.5em", color: "rgba(255,255,255,0.10)" }}>·</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>心</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>归</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>于</span>
+            <span className="hero-char" style={{ display: "inline-block", opacity: 0 }}>岸</span>
+          </div>
+
           <h1 className="hero-title"
             style={{
               fontFamily: "var(--font-display)",
