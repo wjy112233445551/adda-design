@@ -1236,11 +1236,11 @@ function DeployBtn() {
 
       {/* Deploy button */}
       <p style={{ fontFamily:"var(--font-body)", color:"rgba(255,255,255,0.3)", fontSize:11, lineHeight:1.6, marginBottom:16 }}>
-        编辑内容并保存后，点击按钮提交到 GitHub 并自动部署到 Vercel。
+        编辑内容并保存后，点击按钮直接部署到 Vercel 生产环境（通过 vercel CLI，无需 GitHub）。
       </p>
       <button onClick={deploy} disabled={loading}
         style={{ fontFamily:"var(--font-body)", background:"rgba(255,255,255,0.1)", border:"none", color:"#fff", padding:"10px 32px", fontSize:11, cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.2em", width:"100%", opacity:loading?0.5:1 }}>
-        {loading ? "部署中..." : "推送到 GitHub →"}
+        {loading ? "部署中..." : "部署到 Vercel →"}
       </button>
       {msg && <p style={{ fontFamily:"var(--font-body)", color:msg.startsWith("✅")?"rgba(100,255,100,0.6)":"rgba(255,255,255,0.4)", fontSize:10, marginTop:12 }}>{msg}</p>}
     </div>
