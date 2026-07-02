@@ -117,6 +117,9 @@ export async function POST(req: Request) {
     if (config.method === "vercel") {
       try {
         const { stdout } = await execAsync("vercel --prod --yes", { cwd, timeout: 300000 });
+        // Vercel 部署成功后也推送到 GitHub，保持代码同步
+        try { await execAsync(`git push ${config.gitRemote || "origin"} ${config.gitBranch || "main"}`, { cwd, timeout: 120000 }); }
+        catch { /* git push 失败不影响部署结果 */ }
         return NextResponse.json({ success: true, message: "✅ 已部署到 Vercel 生产环境", detail: stdout.slice(-500) });
       } catch (e: any) {
         return NextResponse.json({ success: false, message: "Vercel 部署失败", detail: e.message?.slice(0, 500) || "" });
