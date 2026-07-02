@@ -1,5 +1,35 @@
 // Auto-generated from local filesystem
 export const projectImages: Record<string, string[]> = {
+  "zhongdingshanzhuang": [
+    "/projects/zhongdingshanzhuang/IMG_0424.webp",
+    "/projects/zhongdingshanzhuang/IMG_0427.webp",
+    "/projects/zhongdingshanzhuang/IMG_0438.webp",
+    "/projects/zhongdingshanzhuang/IMG_0464.webp",
+    "/projects/zhongdingshanzhuang/IMG_0479-Pano-2.webp",
+    "/projects/zhongdingshanzhuang/IMG_0479-Pano.webp",
+    "/projects/zhongdingshanzhuang/IMG_0508.webp",
+    "/projects/zhongdingshanzhuang/IMG_0527.webp",
+    "/projects/zhongdingshanzhuang/IMG_0550.webp",
+    "/projects/zhongdingshanzhuang/IMG_0560.webp",
+    "/projects/zhongdingshanzhuang/IMG_0562.webp",
+    "/projects/zhongdingshanzhuang/IMG_0608.webp",
+    "/projects/zhongdingshanzhuang/IMG_0609.webp",
+    "/projects/zhongdingshanzhuang/IMG_0633.webp",
+    "/projects/zhongdingshanzhuang/IMG_0651-Pano.webp",
+    "/projects/zhongdingshanzhuang/IMG_0658-Pano.webp",
+    "/projects/zhongdingshanzhuang/IMG_0695.webp",
+    "/projects/zhongdingshanzhuang/IMG_0708.webp",
+    "/projects/zhongdingshanzhuang/IMG_0764-2.webp",
+    "/projects/zhongdingshanzhuang/IMG_0764.webp",
+    "/projects/zhongdingshanzhuang/IMG_0794.webp",
+    "/projects/zhongdingshanzhuang/IMG_0806.webp",
+    "/projects/zhongdingshanzhuang/IMG_0830.webp",
+    "/projects/zhongdingshanzhuang/IMG_0838-2.webp",
+    "/projects/zhongdingshanzhuang/IMG_0838.webp",
+    "/projects/zhongdingshanzhuang/IMG_0848.webp",
+    "/projects/zhongdingshanzhuang/IMG_0849.webp"
+  ],
+
   "33cafe1": [
     "/projects/33cafe1/DSF1730.webp",
     "/projects/33cafe1/DSF1740.webp",
