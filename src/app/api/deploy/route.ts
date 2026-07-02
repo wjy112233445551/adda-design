@@ -109,7 +109,10 @@ export async function POST(req: Request) {
   const config = readConfig();
   try {
     try { await execAsync("git add -A", { cwd }); await execAsync('git commit -m "admin: update content"', { cwd }); }
-    catch (e: any) { if (!e.message?.includes("nothing to commit")) throw e; }
+    catch (e: any) {
+      const nothing = (e.stdout || "") + (e.stderr || "") + (e.message || "");
+      if (!nothing.includes("nothing to commit")) throw e;
+    }
 
     if (config.method === "vercel") {
       try {
