@@ -3357,38 +3357,7 @@ export const projectImages: Record<string, string[]> = {
     "/projects/xileyishu/DSF3310.webp",
     "/projects/xileyishu/DSF3311.webp"
   ],
-  "yanchengbiguoyuan": [
-    "/projects/yanchengbiguoyuan/IMG_9692.webp",
-    "/projects/yanchengbiguoyuan/IMG_9693.webp",
-    "/projects/yanchengbiguoyuan/IMG_9694.webp",
-    "/projects/yanchengbiguoyuan/IMG_9695.webp",
-    "/projects/yanchengbiguoyuan/IMG_9696.webp",
-    "/projects/yanchengbiguoyuan/IMG_9697.webp",
-    "/projects/yanchengbiguoyuan/IMG_9698.webp",
-    "/projects/yanchengbiguoyuan/IMG_9699.webp",
-    "/projects/yanchengbiguoyuan/IMG_9700.webp",
-    "/projects/yanchengbiguoyuan/IMG_9701.webp",
-    "/projects/yanchengbiguoyuan/IMG_9702.webp",
-    "/projects/yanchengbiguoyuan/IMG_9703.webp",
-    "/projects/yanchengbiguoyuan/IMG_9704.webp",
-    "/projects/yanchengbiguoyuan/IMG_9705.webp",
-    "/projects/yanchengbiguoyuan/IMG_9706.webp",
-    "/projects/yanchengbiguoyuan/IMG_9707.webp",
-    "/projects/yanchengbiguoyuan/IMG_9708.webp",
-    "/projects/yanchengbiguoyuan/IMG_9709.webp",
-    "/projects/yanchengbiguoyuan/IMG_9710.webp",
-    "/projects/yanchengbiguoyuan/IMG_9711.webp",
-    "/projects/yanchengbiguoyuan/IMG_9712.webp",
-    "/projects/yanchengbiguoyuan/IMG_9713.webp",
-    "/projects/yanchengbiguoyuan/IMG_9714.webp",
-    "/projects/yanchengbiguoyuan/IMG_9715.webp",
-    "/projects/yanchengbiguoyuan/IMG_9716.webp",
-    "/projects/yanchengbiguoyuan/IMG_9717.webp",
-    "/projects/yanchengbiguoyuan/IMG_9718.webp",
-    "/projects/yanchengbiguoyuan/IMG_9719.webp",
-    "/projects/yanchengbiguoyuan/IMG_9720.webp",
-    "/projects/yanchengbiguoyuan/IMG_9721.webp"
-  ],
+
   "yangguangdijing": [
     "/projects/yangguangdijing/SCF0535.webp",
     "/projects/yangguangdijing/SCF0536.webp",
@@ -4918,14 +4887,7 @@ export const projectImages: Record<string, string[]> = {
     "/projects/白马花园/DSF5018.webp",
     "/projects/白马花园/DSF5022.webp"
   ],
-  "盐城碧桂园郊果图": [
-    "/projects/盐城碧桂园郊果图/IMG_2637.webp",
-    "/projects/盐城碧桂园郊果图/IMG_2638.webp",
-    "/projects/盐城碧桂园郊果图/IMG_2639.webp",
-    "/projects/盐城碧桂园郊果图/IMG_2640.webp",
-    "/projects/盐城碧桂园郊果图/IMG_2641.webp",
-    "/projects/盐城碧桂园郊果图/IMG_2642.webp"
-  ],
+
   "盗梦空间": [
     "/projects/盗梦空间/DSF5186.webp",
     "/projects/盗梦空间/DSF5198.webp",

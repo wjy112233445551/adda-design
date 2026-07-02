@@ -29,20 +29,20 @@ export function Footer() {
             >
               邮箱 / Email:{" "}
               <a
-                href="mailto:hello@adda.studio"
+                href="mailto:630235075@qq.com"
                 className="text-white/50 hover:text-white transition-colors"
               >
-                hello@adda.studio
+                630235075@qq.com
               </a>
             </p>
             <a
-              href="https://instagram.com"
+              href="https://www.xiaohongshu.com/user/profile/636e0d57000000001f01f49f?xsec_token=ABOQnKXRse9_362aXfoDpJdF7shdxHQBB475yZ77UyrBU=&xsec_source=pc_search"
               target="_blank"
               rel="noopener"
-              className="text-white/40 hover:text-white transition-colors text-[10px] tracking-[.15em] uppercase"
+              className="text-white/40 hover:text-white transition-colors text-[10px] tracking-[.15em]"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              Instagram
+              小红书
             </a>
           </div>
         </div>

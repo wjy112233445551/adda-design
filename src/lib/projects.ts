@@ -14,6 +14,7 @@ export interface Project {
   description: string;
   descriptionEn: string;
   galleryOrder?: number[];
+  captions?: string[];
 }
 
 export const projects: Project[] = [
@@ -25,7 +26,7 @@ export const projects: Project[] = [
   { slug: "guyuelanyuan", folder: "guyuelanyuan", title: "鼓悦兰园", titleEn: "Guyue Orchid Garden", city: "南京", area: "200㎡", year: "2024", category: "住宅", type: "residential", cover: "/projects/guyuelanyuan/DSF2325.webp", description: "以当代手法演绎东方居住美学。木质与石材的交织，在简洁的几何秩序中流露内敛的雅致。", descriptionEn: "A contemporary take on Eastern residential aesthetics. The interplay of wood and stone reveals understated elegance within clean geometric order." },
   { slug: "office", folder: "office", title: "ADDA 办公室", titleEn: "ADDA Office", city: "南京", area: "350㎡", year: "2025", category: "办公空间", type: "commercial", cover: "/projects/office/IMG_3271.webp", description: "邸岸空间建筑设计事务所自用办公空间。以「思考之物」为主题，将工作、展示、交流融为一体。", descriptionEn: "ADDA architecture's own office. Under the theme of 'Thinking Things', it integrates work, exhibition, and communication into one space." },
   { slug: "ruian", folder: "ruian", title: "瑞安", titleEn: "Ruian Residence", city: "瑞安", area: "160㎡", year: "2024", category: "住宅", type: "residential", cover: "/projects/ruian/DSF7852.webp", description: "中小户型的精细化设计实践。每一寸空间都被重新审视，在紧凑中寻求从容的生活尺度。", descriptionEn: "A meticulous design practice for compact living. Every inch is reconsidered to find a comfortable scale of life within a limited footprint." },
-  { slug: "yanchengbiguoyuan", folder: "yanchengbiguoyuan", title: "盐城碧桂园", titleEn: "Yancheng Biguiyuan", city: "盐城", area: "待确认", year: "2024", category: "住宅", type: "residential", cover: "/projects/yanchengbiguoyuan/IMG_9692.webp", description: "盐城之居，温润如玉。以柔和的色调与天然的肌理，在苏北大地营造一方温暖质朴的生活场域。", descriptionEn: "A warm residence in Yancheng. Soft tones and natural textures create a genuine, grounded living environment in northern Jiangsu." },
+
   { slug: "jindifenghua", folder: "jindifenghua", title: "金地风华", titleEn: "Jindi Fenghua", city: "南京", area: "待确认", year: "2025", category: "住宅", type: "residential", cover: "/projects/jindifenghua/DSF1299.webp", description: "风华系列的空间演绎。以精致的细节与流畅的动线，诠释当代城市家庭的品质生活。", descriptionEn: "A spatial interpretation of the Fenghua series. Refined details and fluid circulation define quality living for the contemporary urban family." },
   { slug: "huafameide", folder: "huafameide", title: "华发美的云筑", titleEn: "Huafa Midea Cloud Mansion", city: "南京", area: "待确认", year: "2025", category: "住宅", type: "residential", cover: "/projects/huafameide/DSF9455 拷贝.webp", description: "当代住宅的克制表达。以简洁的几何秩序与温润材质，在都市喧嚣中构筑一方宁静居所。", descriptionEn: "A restrained expression of contemporary living. Clean geometric order and warm materials create a tranquil residence amid urban bustle." },
   { slug: "jiangshandajing", folder: "jiangshandajing", title: "江山大境", titleEn: "Jiangshan Grand Vision", city: "南京", area: "待确认", year: "2025", category: "住宅", type: "residential", cover: "/projects/jiangshandajing/DSF0812.webp", description: "大开大合的空间叙事。以通透的格局与克制的装饰，将视线引向窗外风景，让自然成为空间的主角。", descriptionEn: "A grand spatial narrative. Open layouts and restrained decoration direct the gaze outward, making nature the protagonist of the space." },
