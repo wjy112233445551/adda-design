@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, useEffect } from "react";
+import { useLayoutEffect, useRef, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { Project } from "@/lib/projects";
 import { projectImages } from "@/lib/project-images";
@@ -220,6 +220,27 @@ export function ProjectModal({
   const swipeStartX = useRef(0);
   const swipeStartY = useRef(0);
 
+  // ── Copy link ──────────────────────────────────────────────────────
+  const [copied, setCopied] = useState(false);
+  const handleCopyLink = useCallback(() => {
+    const url = `${window.location.origin}/projects/${project.slug}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => {
+      // Fallback for older browsers
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [project.slug]);
+
   const [images, setImages] = useState<string[]>([]);
   useEffect(() => {
     // 先尝试映射表，没有则 API 加载
@@ -370,6 +391,19 @@ export function ProjectModal({
           style={{ fontFamily: "var(--font-display)" }}
         >
           ← All Projects
+        </button>,
+        document.body
+      )}
+
+      {/* Copy link button */}
+      {createPortal(
+        <button
+          type="button"
+          onClick={handleCopyLink}
+          className="fixed top-6 right-6 z-[9997] text-white/50 hover:text-white text-[10px] tracking-[.2em] uppercase transition-all px-4 py-2 rounded-full backdrop-blur-xl bg-white/5"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {copied ? "✓ Copied" : "🔗 Share"}
         </button>,
         document.body
       )}

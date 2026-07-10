@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useMemo, useState } from "react";
+import { useEffect, useRef, useMemo, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import type { Project } from "@/lib/projects";
@@ -21,6 +21,54 @@ export default function Home() {
   const [modalSlide, setModalSlide] = useState<"left" | "right" | "top">("right");
   const [visibleCount, setVisibleCount] = useState(6);
   const [loading, setLoading] = useState(false);
+
+  // ── URL sync: modal ↔ /projects/[slug] ──────────────────────────────
+  const closeIntentRef = useRef(false);
+  const prevSlugRef = useRef<string | null>(null);
+
+  // Push / replace URL when modal opens or switches project
+  useEffect(() => {
+    if (!modalProject) {
+      prevSlugRef.current = null;
+      return;
+    }
+    const url = `/projects/${modalProject.slug}`;
+    if (!prevSlugRef.current) {
+      // First open — push to history so back button can return to home
+      window.history.pushState(null, "", url);
+    } else if (prevSlugRef.current !== modalProject.slug) {
+      // Switched project — replace so we don't pollute history
+      window.history.replaceState(null, "", url);
+    }
+    prevSlugRef.current = modalProject.slug;
+  }, [modalProject]);
+
+  // Listen for browser back / forward when modal is open
+  useEffect(() => {
+    const handler = () => {
+      if (closeIntentRef.current) {
+        closeIntentRef.current = false;
+        return; // Already handled by our own close button
+      }
+      // Browser back: close modal
+      setModalProject(null);
+      setModalRect(null);
+    };
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    closeIntentRef.current = true;
+    window.history.back();
+    setModalProject(null);
+    setModalRect(null);
+  }, []);
+
+  const handleModalNavigate = useCallback((p: Project) => {
+    setModalProject(p);
+    setModalRect(null);
+  }, []);
 
   useEffect(() => {
     const api = category === "rendering" ? "/api/renderings" : "/api/projects";
@@ -432,14 +480,8 @@ export default function Home() {
           cardRect={modalRect}
           slideFrom={modalSlide}
           allProjects={projects.filter((p: Project) => p.cover)}
-          onClose={() => {
-            setModalProject(null);
-            setModalRect(null);
-          }}
-          onNavigate={(p: Project) => {
-            setModalProject(p);
-            setModalRect(null);
-          }}
+          onClose={handleModalClose}
+          onNavigate={handleModalNavigate}
         />
       )}
       </div>

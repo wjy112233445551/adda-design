@@ -37,7 +37,8 @@ export function Preloader() {
 
   useEffect(() => {
     if (started.current) return;
-    if (window.location.pathname === "/admin") {
+    // Preloader 仅首页展示 — 其他页面（/projects/*、/about、/admin 等）直接跳过
+    if (window.location.pathname !== "/") {
       if (containerRef.current) containerRef.current.style.display = "none";
       return;
     }
@@ -48,10 +49,6 @@ export function Preloader() {
 
     const doExit = () => {
       if (exitTimeline.current) return;
-      // 如果不是首页，先跳转到首页
-      if (window.location.pathname !== "/") {
-        router.replace("/?category=");
-      }
       window.dispatchEvent(new CustomEvent("preloader-exit"));
       exitTimeline.current = gsap.timeline({
         onComplete: () => {
