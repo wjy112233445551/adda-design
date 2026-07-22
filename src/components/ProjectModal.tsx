@@ -7,26 +7,14 @@ import { projectImages } from "@/lib/project-images";
 import gsap from "gsap";
 import { ScrollReveal } from "@/components/ScrollReveal";
 
-// 模板: 宽图→双图→宽图→三图→宽图→双图→缩略图 (与 admin 和详情页一致)
-const MODAL_TEMPLATE = [
-  { type: "full" as const, count: 1 },
-  { type: "pair" as const, count: 2 },
-  { type: "full" as const, count: 1 },
-  { type: "trio" as const, count: 3 },
-  { type: "full" as const, count: 1 },
-  { type: "pair" as const, count: 2 },
-];
-
+// 所有图片统一全宽展示，不再使用缩略图或混排模板
 export function MagazineGallery({ images, title, captions = [], galleryOrder, coverPath }: { images: string[]; title: string; captions?: string[]; galleryOrder?: number[]; coverPath?: string }) {
   // images 已经去掉了封面 (调用方传 images.slice(1))
-  // galleryOrder 是完整列表的索引: [0]=封面, [1..10]=模板槽位, [11..]=缩略图
-  // 传给 MagazineGallery 的 images 对应 galleryOrder[1..]
+  // galleryOrder 是完整列表的索引: [0]=封面, [1..]=所有其余图片
   const galleryImages = images;
-  const templateImgs: string[] = [];
+  const allImgs: string[] = [];
 
   if (galleryOrder && galleryOrder.length > 1) {
-    // galleryOrder: 完整列表的排列顺序，[0]=封面, [1..]=模板+缩略图
-    // galleryImages: images.slice(1)，不含封面
     const coverIdx = galleryOrder[0];
     const ordered: string[] = [];
     const used = new Set<number>();
@@ -34,7 +22,6 @@ export function MagazineGallery({ images, title, captions = [], galleryOrder, co
     for (let i = 1; i < galleryOrder.length; i++) {
       const idx = galleryOrder[i];
       if (idx >= 0 && idx < images.length + 1 && !used.has(idx)) {
-        // 在 slice(1) 中的位置：封面之前的图位置不变，封面之后的图位置 -1
         const actualIdx = idx < coverIdx ? idx : idx - 1;
         if (actualIdx >= 0 && actualIdx < galleryImages.length) {
           ordered.push(galleryImages[actualIdx]);
@@ -42,122 +29,27 @@ export function MagazineGallery({ images, title, captions = [], galleryOrder, co
         }
       }
     }
-    // 补齐剩余（未被 galleryOrder 引用的）
     for (let i = 0; i < galleryImages.length; i++) {
       if (!ordered.includes(galleryImages[i])) ordered.push(galleryImages[i]);
     }
-    templateImgs.push(...ordered);
+    allImgs.push(...ordered);
   } else {
-    templateImgs.push(...galleryImages);
+    allImgs.push(...galleryImages);
   }
-
-  // 按模板切分
-  const groups: { imgs: string[]; layout: "full" | "pair" | "trio" }[] = [];
-  let cursor = 0;
-  for (const t of MODAL_TEMPLATE) {
-    groups.push({ imgs: templateImgs.slice(cursor, cursor + t.count), layout: t.type });
-    cursor += t.count;
-  }
-  const remaining = templateImgs.slice(cursor);
-  const showRemaining = remaining.length > 0;
 
   return (
     <>
-      {groups.map((group, gi) => {
-        // Asymmetric rhythm: odd groups have slight right padding, evens have slight left
-        const isOdd = gi % 2 === 1;
-        const mb = gi === 0 ? "clamp(48px, 8vw, 96px)" : gi === groups.length - 1 ? "clamp(40px, 7vw, 80px)" : "clamp(56px, 9vw, 104px)";
-
-        return (
-        <ScrollReveal key={gi} delay={gi * 120}>
-          <div style={{ marginBottom: mb }}>
-            {group.layout === "full" && group.imgs[0] && (
-              <div>
-                <div style={{ overflow: "hidden", borderRadius: 0 }}>
-                  <img src={group.imgs[0]} alt={`${title} ${gi + 1}`}
-                    className="w-full h-auto"
-                    loading="lazy" />
-                </div>
-              </div>
-            )}
-
-            {group.layout === "pair" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "clamp(6px, 1.2vw, 16px)" }}>
-                {group.imgs.map((img, ii) => img && (
-                  <div key={ii} className="overflow-hidden aspect-[4/5] bg-white/[0.02]">
-                    <img src={img} alt={`${title} ${gi + 1}-${ii + 1}`}
-                      className="w-full h-full object-cover"
-                      loading="lazy" />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {group.layout === "trio" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "clamp(4px, 1vw, 12px)" }}>
-                {group.imgs.map((img, ii) => img && (
-                  <div key={ii} className="overflow-hidden aspect-[4/5] bg-white/[0.02]">
-                    <img src={img} alt={`${title} ${gi + 1}-${ii + 1}`}
-                      className="w-full h-full object-cover"
-                      loading="lazy" />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </ScrollReveal>
-        );
-      })}
-
-      {/* 缩略图 — 更开阔的间距 */}
-      {showRemaining && (
-        <ScrollReveal delay={200}>
-          <div style={{ marginTop: "clamp(48px, 8vw, 96px)", marginBottom: "clamp(40px, 6vw, 64px)" }}>
-            <div style={{ display: "flex", gap: 12, alignItems: "baseline", marginBottom: "clamp(12px, 2vw, 24px)", paddingLeft: "1%" }}>
-              <span style={{ fontFamily: "var(--font-body)", fontSize: "clamp(9px, 0.9vw, 11px)", color: "rgba(255,255,255,0.12)", letterSpacing: "0.25em", textTransform: "uppercase" }}>More</span>
-              <span style={{ fontFamily: "var(--font-body)", fontSize: "clamp(10px, 0.9vw, 12px)", color: "rgba(255,255,255,0.15)", fontStyle: "italic" }}>Detail</span>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(clamp(80px, 15vw, 180px), 1fr))", gap: "clamp(4px, 0.8vw, 8px)" }}>
-              {remaining.map((img, i) => (
-                <Thumbnail key={i} src={img} alt={`${title} - extra ${i + 1}`} />
-              ))}
+      {allImgs.map((img, i) => (
+        <ScrollReveal key={i} delay={i * 100}>
+          <div style={{ marginBottom: "clamp(56px, 9vw, 104px)" }}>
+            <div style={{ overflow: "hidden", borderRadius: 0 }}>
+              <img src={img} alt={`${title} ${i + 1}`}
+                className="w-full h-auto"
+                loading="lazy" />
             </div>
           </div>
         </ScrollReveal>
-      )}
-    </>
-  );
-}
-
-function Thumbnail({ src, alt }: { src: string; alt: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <div className="cursor-pointer" onClick={() => setOpen(true)}>
-        <img
-          src={src}
-          alt={alt}
-          className="w-full aspect-square object-cover hover:opacity-80 transition-opacity"
-          loading="lazy"
-        />
-      </div>
-      {open &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center"
-            style={{ background: "rgba(0,0,0,0.96)" }}
-            onClick={() => setOpen(false)}
-          >
-            <img
-              src={src}
-              alt={alt}
-              loading="lazy"
-              className="max-w-[92vw] max-h-[92vh] object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>,
-          document.body
-        )}
+      ))}
     </>
   );
 }

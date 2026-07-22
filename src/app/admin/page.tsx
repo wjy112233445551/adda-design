@@ -319,18 +319,7 @@ function ProjectsPanel({ onEdit }: { onEdit: (p: Project) => void }) {
   );
 }
 
-// ====== Layout Editor (全屏，完全对齐主站 GallerySection 模板) ======
-// 模板: 宽图→双图→宽图→三图→宽图→双图→缩略图
-const GALLERY_TEMPLATE = [
-  { type: "full" as const, count: 1, label: "宽图①" },
-  { type: "two" as const, count: 2, label: "双图②③" },
-  { type: "full" as const, count: 1, label: "宽图④" },
-  { type: "three" as const, count: 3, label: "三图⑤⑥⑦" },
-  { type: "full" as const, count: 1, label: "宽图⑧" },
-  { type: "two" as const, count: 2, label: "双图⑨⑩" },
-];
-const TOTAL_SLOTS = GALLERY_TEMPLATE.reduce((s, t) => s + t.count, 0); // 10
-
+// ====== Layout Editor (全屏，所有图片统一全宽展示) ======
 function LayoutEditor({ project, onBack }: { project: Project; onBack: () => void }) {
   const [allImgs, setAllImgs] = useState<string[]>([]);
   const [order, setOrder] = useState<number[]>([]);
@@ -360,18 +349,8 @@ function LayoutEditor({ project, onBack }: { project: Project; onBack: () => voi
     }
   }, [project.folder]);
 
-  // order[0] = cover | order[1..10] = template slots | order[11..] = thumbs
+  // order[0] = cover | order[1..] = full-width gallery (按序排列)
   const coverIdx = order.length > 0 ? order[0] : -1;
-  const slotOrder = order.slice(1, 1 + TOTAL_SLOTS);
-  const thumbOrder = order.slice(1 + TOTAL_SLOTS);
-
-  // Partition slotOrder into template groups
-  const slotGroups: number[][] = [];
-  let cursor = 0;
-  for (const t of GALLERY_TEMPLATE) {
-    slotGroups.push(slotOrder.slice(cursor, cursor + t.count));
-    cursor += t.count;
-  }
 
   const swapSlot = (slotIdx: number, imgIdx: number) => {
     const next = [...order];
@@ -410,21 +389,20 @@ function LayoutEditor({ project, onBack }: { project: Project; onBack: () => voi
             {allImgs.map((img, i) => {
               const slot = order.indexOf(i);
               const isCover = slot === 0;
-              const isSlot = slot >= 1 && slot <= TOTAL_SLOTS;
               return (
                 <button key={i} onClick={() => {
                   if (pickerSlot !== null) swapSlot(pickerSlot, i);
                 }}
                   style={{
                     aspectRatio: "1", background: "none",
-                    border: isCover ? "2px solid rgba(255,200,100,0.7)" : isSlot ? "1px solid rgba(255,255,255,0.25)" : "1px solid transparent",
+                    border: isCover ? "2px solid rgba(255,200,100,0.7)" : slot > 0 ? "1px solid rgba(255,255,255,0.25)" : "1px solid transparent",
                     padding: 0, cursor: pickerSlot !== null ? "pointer" : "default",
-                    opacity: (isCover || isSlot) ? 0.5 : 1, position: "relative",
+                    opacity: slot >= 0 ? 0.5 : 1, position: "relative",
                   }}>
                   <img src={img} style={{ width: "100%", height: "100%", objectFit: "contain", background: "rgba(0,0,0,0.4)" }} alt="" />
                   <span style={{ position: "absolute", bottom: 0, right: 0, background: "rgba(0,0,0,0.7)", color: "rgba(255,255,255,0.5)", fontSize: 8, padding: "1px 3px" }}>{i}</span>
                   {isCover && <span style={{ position: "absolute", top: 0, left: 0, background: "rgba(255,200,100,0.8)", color: "#000", fontSize: 7, padding: "1px 3px", fontWeight: 700 }}>封面</span>}
-                  {isSlot && <span style={{ position: "absolute", top: 0, left: 0, background: "rgba(255,255,255,0.5)", color: "#000", fontSize: 7, padding: "1px 3px", fontWeight: 700 }}>{slot}</span>}
+                  {slot > 0 && <span style={{ position: "absolute", top: 0, left: 0, background: "rgba(255,255,255,0.5)", color: "#000", fontSize: 7, padding: "1px 3px", fontWeight: 700 }}>{slot}</span>}
                 </button>
               );
             })}
@@ -433,7 +411,7 @@ function LayoutEditor({ project, onBack }: { project: Project; onBack: () => voi
         {pickerSlot !== null && (
           <div style={{ padding: "8px 16px", borderTop: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.02)" }}>
             <p style={{ fontFamily: "var(--font-body)", color: "rgba(255,255,255,0.6)", fontSize: 10, margin: 0 }}>
-              点击左侧图片替换{pickerSlot === 0 ? "封面" : `大图 ${pickerSlot}`}
+              点击左侧图片替换{pickerSlot === 0 ? "封面" : `第 ${pickerSlot} 张`}
               <span onClick={() => setPickerSlot(null)} style={{ color: "rgba(255,80,80,0.6)", cursor: "pointer", textDecoration: "underline", marginLeft: 8 }}>取消</span>
             </p>
           </div>
@@ -495,76 +473,31 @@ function LayoutEditor({ project, onBack }: { project: Project; onBack: () => voi
             </div>
           )}
 
-          {/* 模板排版区 — 宽图→双图→宽图→三图→宽图→双图 */}
-          {slotGroups.map((group, gi) => {
-            const t = GALLERY_TEMPLATE[gi];
-            const isFull = t.type === "full";
-            const globalSlot = GALLERY_TEMPLATE.slice(0, gi).reduce((s, x) => s + x.count, 0);
-            const cols = t.type === "three" ? "1fr 1fr 1fr" : t.type === "two" ? "1fr 1fr" : "";
-
+          {/* 全宽大图排版区 — 所有图片统一全宽展示 */}
+          {order.slice(1).map((imgIdx, i) => {
+            const slot = i + 1; // slot 1, 2, 3, ...
             return (
-              <div key={gi} style={{ marginBottom: 80 }}>
-                {/* Slot label */}
+              <div key={i} style={{ marginBottom: 80 }}>
                 <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontFamily: "var(--font-body)", color: "rgba(255,255,255,0.12)", fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase" }}>{t.label}</span>
+                  <span style={{ fontFamily: "var(--font-body)", color: "rgba(255,255,255,0.12)", fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase" }}>大图 {slot}</span>
                 </div>
-
-                {isFull ? (
-                  <button onClick={() => setPickerSlot(globalSlot + 1)}
-                    style={{
-                      width: "100%", display: "block", background: group[0] >= 0 ? "none" : "rgba(255,255,255,0.02)",
-                      border: pickerSlot === globalSlot + 1 ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent",
-                      padding: 0, cursor: "pointer", minHeight: group[0] >= 0 ? 0 : 120,
-                    }}>
-                    {group[0] >= 0 && group[0] < allImgs.length ? (
-                      <img src={allImgs[group[0]]} alt="" style={{ width: "100%", height: "auto", display: "block" }} />
-                    ) : (
-                      <div style={{ padding: 40, textAlign: "center" }}>
-                        <span style={{ fontFamily: "var(--font-body)", color: "rgba(255,255,255,0.15)", fontSize: 12 }}>点击选择</span>
-                      </div>
-                    )}
-                  </button>
-                ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: cols, gap: "12px 16px" }}>
-                    {group.map((imgIdx, i) => {
-                      const slot = globalSlot + i + 1;
-                      return (
-                        <button key={i} onClick={() => setPickerSlot(slot)}
-                          style={{
-                            width: "100%", display: "block", background: imgIdx >= 0 ? "none" : "rgba(255,255,255,0.02)",
-                            border: pickerSlot === slot ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent",
-                            padding: 0, cursor: "pointer", minHeight: imgIdx >= 0 ? 0 : 80,
-                          }}>
-                          {imgIdx >= 0 && imgIdx < allImgs.length ? (
-                            <img src={allImgs[imgIdx]} alt="" style={{ width: "100%", height: "auto", display: "block" }} />
-                          ) : (
-                            <div style={{ padding: 30, textAlign: "center" }}>
-                              <span style={{ fontFamily: "var(--font-body)", color: "rgba(255,255,255,0.1)", fontSize: 10 }}>空</span>
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                <button onClick={() => setPickerSlot(slot)}
+                  style={{
+                    width: "100%", display: "block", background: imgIdx >= 0 ? "none" : "rgba(255,255,255,0.02)",
+                    border: pickerSlot === slot ? "1px solid rgba(255,255,255,0.4)" : "1px solid transparent",
+                    padding: 0, cursor: "pointer", minHeight: imgIdx >= 0 ? 0 : 120,
+                  }}>
+                  {imgIdx >= 0 && imgIdx < allImgs.length ? (
+                    <img src={allImgs[imgIdx]} alt="" style={{ width: "100%", height: "auto", display: "block" }} />
+                  ) : (
+                    <div style={{ padding: 40, textAlign: "center" }}>
+                      <span style={{ fontFamily: "var(--font-body)", color: "rgba(255,255,255,0.15)", fontSize: 12 }}>点击选择</span>
+                    </div>
+                  )}
+                </button>
               </div>
             );
           })}
-
-          {/* 缩略图 (与主站完全一致) */}
-          {thumbOrder.length > 0 && (
-            <div style={{ paddingTop: 48, marginTop: 16, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-              <p style={{ fontFamily: "var(--font-body)", color: "rgba(255,255,255,0.15)", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 20px" }}>All images</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 12px" }}>
-                {thumbOrder.map((imgIdx, i) => {
-                  const img = imgIdx >= 0 && imgIdx < allImgs.length ? allImgs[imgIdx] : null;
-                  return img ? (
-                    <img key={i} src={img} alt="" style={{ height: "80px", width: "auto", objectFit: "contain", background: "rgba(255,255,255,0.02)" }} />
-                  ) : null;
-                })}
-              </div>
-            </div>
-          )}
 
           {/* Prev/Next (与主站一致) */}
           <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 32, marginTop: 48, borderTop: "1px solid rgba(255,255,255,0.1)" }}>

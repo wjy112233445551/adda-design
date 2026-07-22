@@ -65,49 +65,8 @@ function GalleryImage({
   );
 }
 
-// ── Thumbnail strip for remaining images ───────────────────────────────
-function ThumbnailStrip({
-  images,
-  startIndex,
-}: {
-  images: string[];
-  startIndex: number;
-}) {
-  return (
-    <div className="pt-12 mt-4 border-t border-white/[0.06]">
-      <p
-        className="text-white/15 text-[10px] tracking-[.15em] uppercase mb-5"
-        style={{ fontFamily: "var(--font-body)" }}
-      >
-        All images
-      </p>
-      <div className="flex flex-wrap gap-2 md:gap-3">
-        {images.map((img, i) => (
-          <img
-            key={i}
-            src={img}
-            alt={`Image ${startIndex + i}`}
-            loading="lazy"
-            className="h-20 md:h-28 w-auto object-contain bg-white/[0.02] hover:opacity-80 transition-opacity duration-300"
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ── Main gallery section ────────────────────────────────────────────────
-// 模板: 宽图→双图→宽图→三图→宽图→双图→缩略图
-const GALLERY_TEMPLATE = [
-  { type: "full" as const, count: 1 },
-  { type: "two" as const, count: 2 },
-  { type: "full" as const, count: 1 },
-  { type: "three" as const, count: 3 },
-  { type: "full" as const, count: 1 },
-  { type: "two" as const, count: 2 },
-];
-const TOTAL_SLOTS = GALLERY_TEMPLATE.reduce((sum, t) => sum + t.count, 0); // 10
-
+// 所有图片统一全宽展示，不再使用缩略图或混排模板
 function GallerySection({
   images,
   title,
@@ -119,15 +78,6 @@ function GallerySection({
   description?: string;
   descriptionEn?: string;
 }) {
-  // 按模板取前10张，剩余为缩略图
-  const slots: string[][] = [];
-  let cursor = 0;
-  for (const t of GALLERY_TEMPLATE) {
-    const group = images.slice(cursor, cursor + t.count);
-    slots.push(group);
-    cursor += t.count;
-  }
-  const thumbnails = images.slice(cursor);
   const total = images.length;
 
   return (
@@ -145,41 +95,12 @@ function GallerySection({
         </ScrollReveal>
       )}
 
-      {/* Template slots */}
-      {slots.map((group, gi) => {
-        const isFull = GALLERY_TEMPLATE[gi].type === "full";
-        const cols = GALLERY_TEMPLATE[gi].type === "three" ? "md:grid-cols-3" : GALLERY_TEMPLATE[gi].type === "two" ? "md:grid-cols-2" : "";
-        const gap = isFull ? "" : "gap-3 md:gap-4";
-        const margin = "mb-20 md:mb-32";
-
-        // Find the global index of the first image in this group
-        const globalStart = GALLERY_TEMPLATE.slice(0, gi).reduce((s, t) => s + t.count, 0);
-
-        return (
-          <ScrollReveal key={gi} delay={gi * 100}>
-            {isFull ? (
-              group[0] ? <GalleryImage src={group[0]} alt={`${title} - ${globalStart + 2}`} index={globalStart + 1} total={total} /> : null
-            ) : (
-              <div className={`grid grid-cols-1 ${cols} ${gap} ${margin}`}>
-                {group.map((img, i) =>
-                  img ? (
-                    <div key={i} className="overflow-hidden aspect-[4/5] bg-white/[0.02]">
-                      <img src={img} alt={`${title} - ${globalStart + i + 2}`} loading="lazy" className="w-full h-full object-cover" />
-                    </div>
-                  ) : null
-                )}
-              </div>
-            )}
-          </ScrollReveal>
-        );
-      })}
-
-      {/* Thumbnail grid for remaining images */}
-      {thumbnails.length > 0 && (
-        <ScrollReveal delay={200}>
-          <ThumbnailStrip images={thumbnails} startIndex={TOTAL_SLOTS + 1} />
+      {/* 所有图片统一全宽展示 */}
+      {images.map((img, i) => (
+        <ScrollReveal key={i} delay={i * 50}>
+          <GalleryImage src={img} alt={`${title} - ${i + 1}`} index={i + 1} total={total} />
         </ScrollReveal>
-      )}
+      ))}
     </div>
   );
 }
