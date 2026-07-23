@@ -376,6 +376,38 @@ function LayoutEditor({ project, onBack }: { project: Project; onBack: () => voi
     else setMsg("保存失败");
   };
 
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const handleDelete = async (imgIdx: number) => {
+    if (!window.confirm("确定删除这张图片？此操作不可撤销。")) return;
+    setDeleteBusy(true);
+    const imgPath = allImgs[imgIdx];
+    const fileName = imgPath.split("/").pop() || "";
+    try {
+      const res = await fetch(`/api/browse?folder=${encodeURIComponent(project.folder)}&image=${encodeURIComponent(fileName)}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        // 从 allImgs 中移除
+        const newAllImgs = allImgs.filter((_, idx) => idx !== imgIdx);
+        setAllImgs(newAllImgs);
+        // 更新 order：移除被删索引，所有大于它的值 -1
+        const newOrder = order
+          .filter(idx => idx !== imgIdx)
+          .map(idx => idx > imgIdx ? idx - 1 : idx);
+        setOrder(newOrder);
+        setPickerSlot(null);
+        setMsg("图片已删除");
+        setTimeout(() => setMsg(""), 2500);
+      } else {
+        setMsg("删除失败: " + (data.error || "未知错误"));
+        setTimeout(() => setMsg(""), 3000);
+      }
+    } catch {
+      setMsg("删除请求失败");
+      setTimeout(() => setMsg(""), 3000);
+    }
+    setDeleteBusy(false);
+  };
+
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "#000", display: "flex" }}>
       {/* Left: Image Library */}
@@ -403,6 +435,20 @@ function LayoutEditor({ project, onBack }: { project: Project; onBack: () => voi
                   <span style={{ position: "absolute", bottom: 0, right: 0, background: "rgba(0,0,0,0.7)", color: "rgba(255,255,255,0.5)", fontSize: 8, padding: "1px 3px" }}>{i}</span>
                   {isCover && <span style={{ position: "absolute", top: 0, left: 0, background: "rgba(255,200,100,0.8)", color: "#000", fontSize: 7, padding: "1px 3px", fontWeight: 700 }}>封面</span>}
                   {slot > 0 && <span style={{ position: "absolute", top: 0, left: 0, background: "rgba(255,255,255,0.5)", color: "#000", fontSize: 7, padding: "1px 3px", fontWeight: 700 }}>{slot}</span>}
+                  {/* Delete button */}
+                  <span onClick={(e) => { e.stopPropagation(); handleDelete(i); }}
+                    title="删除这张图片"
+                    style={{
+                      position: "absolute", top: 0, right: 0,
+                      width: 16, height: 16,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      background: "rgba(255,50,50,0.7)", color: "#fff",
+                      fontSize: 10, fontWeight: 700, lineHeight: 1,
+                      cursor: "pointer", opacity: 0.7,
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.7"; }}
+                  >×</span>
                 </button>
               );
             })}

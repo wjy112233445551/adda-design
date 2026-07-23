@@ -57,6 +57,18 @@ export function importImagesFrom(sourcePath: string, folderName: string) {
   return { success: true as const, count, folder: folderName };
 }
 
+export function deleteProjectImage(folder: string, imageName: string) {
+  const folderPath = projectsRoot() + path.sep + folder;
+  const filePath = folderPath + path.sep + imageName;
+  try {
+    if (!fs.existsSync(filePath)) return { error: "File not found" as const };
+    fs.unlinkSync(filePath);
+    return { success: true as const };
+  } catch (e: any) {
+    return { error: e?.message || "Delete failed" as const };
+  }
+}
+
 export function listProjectImages(folder: string): string[] | null {
   const folderPath = projectsRoot() + path.sep + folder;
   try {

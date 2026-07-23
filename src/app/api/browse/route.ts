@@ -99,3 +99,61 @@ export async function GET(req: Request) {
   }
   return NextResponse.json(images);
 }
+
+// ── DELETE：删除项目文件夹中单张图片 ──
+export async function DELETE(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const folder = searchParams.get("folder");
+  const image = searchParams.get("image");
+
+  if (!folder || !image) {
+    return NextResponse.json({ error: "Missing folder or image param" }, { status: 400 });
+  }
+
+  if (IS_VERCEL) {
+    return NextResponse.json(
+      { error: "图片删除仅在本地环境可用。请使用 localhost 管理后台。" },
+      { status: 400 }
+    );
+  }
+
+  // 校验 folder 在白名单中
+  const validFolders = await getValidFolders();
+  if (!validFolders.has(folder)) {
+    return NextResponse.json({ error: "Folder not found", folder }, { status: 404 });
+  }
+
+  const localFs = require("./local-fs");
+  const result = localFs.deleteProjectImage(folder, image);
+  if ("error" in result) {
+    return NextResponse.json(result, { status: 404 });
+  }
+
+  // 同步更新 project-images.ts：移除被删图片条目
+  try {
+    const piPath = "src/lib/project-images.ts";
+    const fs = require("fs");
+    const path = require("path");
+    const piFullPath = path.join(process.cwd(), piPath);
+    let content = fs.readFileSync(piFullPath, "utf-8");
+    const escapedPath = `/projects/${folder}/${image}`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // 移除该路径行（含末尾逗号）
+    const linePattern = new RegExp(`\\s*"${escapedPath}",?\\n`, 'g');
+    content = content.replace(linePattern, '\n');
+    fs.writeFileSync(piFullPath, content, "utf-8");
+    _folderWhitelist = null;
+  } catch (e) {
+    // project-images.ts 更新失败不影响删除本身
+    console.error("Failed to update project-images.ts:", e);
+  }
+
+  // 返回更新后的图片列表
+  try {
+    const { projectImages } = await import("@/lib/project-images");
+    const mapped = (projectImages as Record<string, string[]>)[folder];
+    if (mapped) return NextResponse.json({ success: true, images: mapped });
+  } catch {}
+
+  const updated = localFs.listProjectImages(folder);
+  return NextResponse.json({ success: true, images: updated || [] });
+}
